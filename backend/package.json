@@ -1,7 +1,7 @@
 {
   "name": "teamup",
   "version": "1.0.0",
-  "description": "a platform for searching in-course, ECS, capstone teams @vitap",
+  "description": "a platform for searching teams for in-course, ECS, capstone projects @vitap",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -11,10 +11,13 @@
     "url": "git+https://github.com/Lavanya-426/TeamUp.git"
   },
   "keywords": [],
-  "author": "",
+  "author": "Lavanya",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/Lavanya-426/TeamUp/issues"
   },
-  "homepage": "https://github.com/Lavanya-426/TeamUp#readme"
+  "homepage": "https://github.com/Lavanya-426/TeamUp#readme",
+  "dependencies": {
+    "express": "^5.2.1"
+  }
 }
