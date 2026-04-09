@@ -18,6 +18,10 @@
   },
   "homepage": "https://github.com/Lavanya-426/TeamUp#readme",
   "dependencies": {
+    "cors": "^2.8.6",
     "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
   }
 }
