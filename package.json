@@ -1,0 +1,20 @@
+{
+  "name": "teamup",
+  "version": "1.0.0",
+  "description": "a platform for searching in-course, ECS, capstone teams @vitap",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Lavanya-426/TeamUp.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Lavanya-426/TeamUp/issues"
+  },
+  "homepage": "https://github.com/Lavanya-426/TeamUp#readme"
+}
