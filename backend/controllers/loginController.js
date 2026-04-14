@@ -1,5 +1,6 @@
 const User = require("../models/User");
 const bcrypt = require("bcrypt");
+const generateToken = require("./utils/jwt");
 
 exports.loginUser = async (req, res) => {
   try {
@@ -17,10 +18,16 @@ exports.loginUser = async (req, res) => {
       return res.status(401).json({ message: "password mismatch!" });
     }
 
+    const token = generateToken(user);
+
     // user is authenticated
     res.json({
-      message: "Login successful",
-      user: { id: user._id, email: user.email },
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+      },
     });
   } catch (err) {
     res.status(500).json({ message: "Server error" });
