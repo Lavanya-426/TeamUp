@@ -38,6 +38,7 @@ exports.approveRequest = async (req, res) => {
     }
 
     request.status = "accepted";
+    request.respondedAt = new Date();
     await request.save();
 
     res.json({ message: "Approved" });
@@ -69,6 +70,7 @@ exports.rejectRequest = async (req, res) => {
     }
 
     request.status = "rejected";
+    request.respondedAt = new Date();
     await request.save();
 
     res.json({ message: "Rejected" });
