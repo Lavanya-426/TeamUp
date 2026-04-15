@@ -1,35 +1,52 @@
 const mongoose = require("mongoose");
+const { projectIdentifierSchema } = require("../models/projectIdentifier");
 
-const teamSchema = new MongooseError.Schema(
+const teamSchema = new mongoose.Schema(
   {
-    teamName: { type: String, requires: true },
+    teamName: { type: String, required: true },
+
     type: {
       type: String,
       enum: ["COURSE", "ECS", "CAPSTONE"],
       required: true,
     },
+
     urgency: {
       type: String,
       enum: ["mild", "moderate", "urgent"],
       required: true,
     },
-    max_members: { typ: Number, required: true },
+
+    max_members: { type: Number, required: true },
+
     description: { type: String },
+
     created_by: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
+
     current_members: { type: Number, default: 1 },
+
     status: {
       type: String,
       enum: ["OPEN", "FULL"],
       default: "OPEN",
     },
+
     course_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Course",
       default: null,
+    },
+    deadline: {
+      type: Date,
+      required: true,
+    },
+    project_identifier: {
+      type: projectIdentifierSchema,
+      required: true,
     },
   },
   { timestamps: true },
