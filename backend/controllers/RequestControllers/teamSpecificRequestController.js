@@ -44,7 +44,7 @@ exports.withdrawRequest = async (req, res) => {
     const userId = req.user.user_id;
     const { teamId } = req.params;
 
-    const request = await TeamJoinRequest.findOneAndDelete({
+    const request = await TeamJoinRequest.findOne({
       student_id: userId,
       team_id: teamId,
       status: "pending",
@@ -53,6 +53,10 @@ exports.withdrawRequest = async (req, res) => {
     if (!request) {
       return res.status(404).json({ message: "No pending request found" });
     }
+
+    // change status
+    request.status = "withdrawn";
+    await request.save();
 
     res.json({ message: "Request withdrawn" });
   } catch (err) {
