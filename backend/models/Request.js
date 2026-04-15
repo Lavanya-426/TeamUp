@@ -17,7 +17,13 @@ const requestSchema = new mongoose.Schema(
       enum: ["pending", "accepted", "rejected", "withdrawn"],
       default: "pending",
     },
+    respondedAt: {
+      type: Date,
+    },
   },
-  { timestamps: true },
+
+  {
+    timestamps: { createdAt: "requestedAt", updatedAt: "updatedAt" },
+  },
 );
 module.exports = mongoose.model("Request", requestSchema);
