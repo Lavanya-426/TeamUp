@@ -1,14 +1,17 @@
 const TeamMembership = require("../../models/TeamMembership.js");
 const TeamJoinRequest = require("../../models/Request.js");
 
+// SEND REQUEST
+
 exports.sendRequest = async (req, res) => {
   try {
     const userId = req.user.user_id;
     const { teamId } = req.params;
+    const targetTeam = req.targetTeam;
 
     // already member?
     const isMember = await TeamMembership.findOne({
-      student_id: userId,
+      user_id: userId,
       team_id: teamId,
     });
 
@@ -16,21 +19,32 @@ exports.sendRequest = async (req, res) => {
       return res.status(400).json({ message: "Already a member" });
     }
 
-    // already requested?
-    const existing = await TeamJoinRequest.findOne({
-      student_id: userId,
+    // team full check
+    if (targetTeam.current_members >= targetTeam.max_members) {
+      return res.status(400).json({ message: "Team is full" });
+    }
+
+    // existing request
+    const existingRequest = await TeamJoinRequest.findOne({
+      user_id: userId,
       team_id: teamId,
-      status: "pending",
     });
 
-    if (existing) {
-      return res.status(400).json({ message: "Request already sent" });
+    if (existingRequest) {
+      if (existingRequest.status === "pending") {
+        return res.status(400).json({ message: "Request already sent" });
+      }
+
+      existingRequest.status = "pending";
+      existingRequest.respondedAt = null;
+      await existingRequest.save();
+
+      return res.status(200).json({ request: existingRequest });
     }
 
     const request = await TeamJoinRequest.create({
-      student_id: userId,
+      user_id: userId,
       team_id: teamId,
-      status: "pending",
     });
 
     res.status(201).json({ request });
@@ -38,14 +52,14 @@ exports.sendRequest = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-
+// WITHDRAW REQUEST
 exports.withdrawRequest = async (req, res) => {
   try {
     const userId = req.user.user_id;
     const { teamId } = req.params;
 
     const request = await TeamJoinRequest.findOne({
-      student_id: userId,
+      user_id: userId,
       team_id: teamId,
       status: "pending",
     });
@@ -54,7 +68,7 @@ exports.withdrawRequest = async (req, res) => {
       return res.status(404).json({ message: "No pending request found" });
     }
 
-    // change status
+    // update status
     request.status = "withdrawn";
     await request.save();
 
@@ -64,15 +78,16 @@ exports.withdrawRequest = async (req, res) => {
   }
 };
 
+// GET REQUEST STATUS
 exports.getRequestStatus = async (req, res) => {
   try {
     const userId = req.user.user_id;
     const { teamId } = req.params;
 
     const request = await TeamJoinRequest.findOne({
-      student_id: userId,
+      user_id: userId,
       team_id: teamId,
-    });
+    }).sort({ createdAt: -1 });
 
     if (!request) {
       return res.json({ status: "none" });
@@ -84,25 +99,17 @@ exports.getRequestStatus = async (req, res) => {
   }
 };
 
+// GET ALL REQUESTS (ADMIN ONLY → handled by middleware)
 exports.getAllRequests = async (req, res) => {
   try {
-    const userId = req.user.user_id;
     const { teamId } = req.params;
-
-    // check admin
-    const membership = await TeamMembership.findOne({
-      student_id: userId,
-      team_id: teamId,
-    });
-
-    if (!membership || membership.role !== "admin") {
-      return res.status(403).json({ message: "Admin only" });
-    }
 
     const requests = await TeamJoinRequest.find({
       team_id: teamId,
       status: "pending",
-    });
+    })
+      .populate("user_id", "name email")
+      .sort({ createdAt: -1 });
 
     res.json({ requests });
   } catch (err) {

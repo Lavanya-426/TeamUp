@@ -7,7 +7,7 @@ exports.viewReceivedRequests = async (req, res) => {
 
     // 1. find teams where user is admin
     const adminTeams = await TeamMembership.find({
-      student_id: userId,
+      user_id: userId,
       role: "admin",
     }).select("team_id");
 
@@ -17,7 +17,10 @@ exports.viewReceivedRequests = async (req, res) => {
     const requests = await TeamJoinRequest.find({
       team_id: { $in: teamIds },
       status: "pending",
-    }).sort({ createdAt: -1 }); // newest first;
+    })
+      .populate("user_id", "name email")
+      .populate("team_id", "team_name")
+      .sort({ createdAt: -1 }); // newest first;
 
     return res.json({ requests });
   } catch (err) {
@@ -49,7 +52,7 @@ exports.viewSentRequests = async (req, res) => {
       },
 
       { $sort: { statusPriority: 1, createdAt: -1 } },
-    ]);
+    ]).populate("team_id", "team_name");
     return res.json({ requests });
   } catch (err) {
     return res.status(500).json({ message: "Server error" });
