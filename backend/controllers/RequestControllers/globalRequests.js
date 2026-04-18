@@ -3,7 +3,7 @@ const joinRequest = require("../../models/Request.js");
 
 exports.viewReceivedRequests = async (req, res) => {
   try {
-    const userId = req.user.user_id;
+    const userId = req.userInfo.id;
 
     // 1. find teams where user is admin
     const adminTeams = await TeamMembership.find({
@@ -19,7 +19,7 @@ exports.viewReceivedRequests = async (req, res) => {
       status: "pending",
     })
       .populate("user_id", "name email")
-      .populate("team_id", "team_name")
+      .populate("team_id", "teamName")
       .sort({ createdAt: -1 }); // newest first;
 
     return res.json({ requests });
@@ -32,7 +32,7 @@ exports.viewReceivedRequests = async (req, res) => {
 
 exports.viewSentRequests = async (req, res) => {
   try {
-    const userId = req.user.user_id;
+    const userId = req.userInfo.id;
 
     const requests = await TeamJoinRequest.aggregate([
       { $match: { student_id: userId } },
@@ -54,7 +54,7 @@ exports.viewSentRequests = async (req, res) => {
       },
 
       { $sort: { statusPriority: 1, createdAt: -1 } },
-    ]).populate("team_id", "team_name");
+    ]).populate("team_id", "teamName");
     return res.json({ requests });
   } catch (err) {
     console.log(err);
