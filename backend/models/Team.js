@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-const projectIdentifierSchema = require("./projectIdentifier"); // plain schema, not a model
 
 const teamSchema = new mongoose.Schema(
   {
