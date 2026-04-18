@@ -20,6 +20,12 @@ exports.registerUser = async (req, res) => {
     if (!name || !email || !password)
       return res.status(422).json({ message: "Required fields missing" });
 
+    if (!email.endsWith("@vitapstudent.ac.in")) {
+      return res.status(400).json({
+        message: "Only VIT-AP student emails are allowed",
+      });
+    }
+
     //checking for existing users
     const existing = await User.findOne({ email });
     if (existing)

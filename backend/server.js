@@ -1,8 +1,17 @@
 const express = require("express");
 const path = require("path");
 const fs = require("fs");
+require("dotenv").config();
 
 const app = express();
+app.use(express.json());
+
+const mongoose = require("mongoose");
+
+mongoose
+  .connect("mongodb://127.0.0.1:27017/teamup")
+  .then(() => console.log("MongoDB connected"))
+  .catch((err) => console.error(err));
 
 app.get("/", (req, res) => {
   res.send("hello");
@@ -11,7 +20,7 @@ app.get("/", (req, res) => {
 const authRoutes = require("./routes/authRoutes");
 app.use("/api/auth", authRoutes);
 
-const requestRoutes = require("./routes/reuestRoutes");
+const requestRoutes = require("./routes/requestRoutes");
 app.use("/api/request", requestRoutes);
 
 const teamRoutes = require("./routes/teamRoutes");
@@ -21,7 +30,6 @@ const userRoutes = require("./routes/userRoutes");
 app.use("/api/user", userRoutes);
 
 const discoveryRoutes = require("./routes/teamDiscoveryRoutes");
-
 app.use("/api/discover", discoveryRoutes);
 
 app.listen(3000, () => {

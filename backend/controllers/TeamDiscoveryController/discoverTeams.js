@@ -1,6 +1,6 @@
 const Team = require("../../models/Team");
 const TeamMembership = require("../../models/TeamMembership");
-const isSameProject = require("../../utils/projectIdentifier");
+const isSameProject = require("../../utils/projectIdentifierUtils");
 
 exports.discoverTeams = async (req, res) => {
   try {

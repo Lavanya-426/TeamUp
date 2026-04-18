@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const { projectIdentifierSchema } = require("../models/projectIdentifier");
+const projectIdentifierSchema = require("./projectIdentifier"); // plain schema, not a model
 
 const teamSchema = new mongoose.Schema(
   {
@@ -44,6 +44,13 @@ const teamSchema = new mongoose.Schema(
       type: Date,
       required: true,
     },
+    project_identifier: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "project identifer",
+      required: true,
+    },
+    // Embedded subdocument — holds course/ECS/capstone context
+    // course_id lives inside project_identifier, not duplicated here
     project_identifier: {
       type: projectIdentifierSchema,
       required: true,

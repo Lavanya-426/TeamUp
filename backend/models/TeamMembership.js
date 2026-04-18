@@ -21,5 +21,8 @@ const teamMemberSchema = new mongoose.Schema({
     default: Date.now,
   },
 });
+
+// Ensures a user can only appear once per team
 teamMemberSchema.index({ user_id: 1, team_id: 1 }, { unique: true });
+
 module.exports = mongoose.model("TeamMember", teamMemberSchema);

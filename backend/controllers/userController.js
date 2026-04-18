@@ -4,7 +4,7 @@ const bcrypt = require("bcrypt");
 // GET USER PROFILE
 exports.getUserProfile = async (req, res) => {
   try {
-    const { userId } = req.query; // for now (later from JWT)
+    const userId = req.userInfo.id;
 
     const user = await User.findById(userId).select("-password");
 
@@ -14,6 +14,7 @@ exports.getUserProfile = async (req, res) => {
 
     res.json(user);
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 };

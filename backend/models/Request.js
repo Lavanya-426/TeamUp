@@ -26,4 +26,8 @@ const requestSchema = new mongoose.Schema(
     timestamps: { createdAt: "requestedAt", updatedAt: "updatedAt" },
   },
 );
+
+// Prevent a user from having more than one request document per team
+requestSchema.index({ user_id: 1, team_id: 1 }, { unique: true });
+
 module.exports = mongoose.model("Request", requestSchema);
