@@ -3,7 +3,7 @@ const Team = require("../../models/Team.js");
 
 exports.getAdminTeams = async (req, res) => {
   try {
-    const userId = req.user.user_id;
+    const userId = req.userInfo.id;
 
     const memberships = await TeamMembership.find({
       user_id: userId,
@@ -22,7 +22,7 @@ exports.getAdminTeams = async (req, res) => {
 
 exports.getMemberTeams = async (req, res) => {
   try {
-    const userId = req.user.user_id;
+    const userId = req.userInfo.id;
 
     const memberships = await TeamMembership.find({
       user_id: userId,
@@ -35,6 +35,16 @@ exports.getMemberTeams = async (req, res) => {
   } catch (err) {
     console.log(err);
 
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.getAllTeams = async (req, res) => {
+  try {
+    const t = await Team.find();
+    res.json(t);
+  } catch (err) {
+    console.log(err);
     res.status(500).json({ message: "Server error" });
   }
 };
