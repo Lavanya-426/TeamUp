@@ -5,7 +5,7 @@ const TeamJoinRequest = require("../../models/Request.js");
 
 exports.sendRequest = async (req, res) => {
   try {
-    const userId = req.user.user_id;
+    const userId = req.userInfo.id;
     const { teamId } = req.params;
     const targetTeam = req.targetTeam;
 
@@ -57,7 +57,7 @@ exports.sendRequest = async (req, res) => {
 // WITHDRAW REQUEST
 exports.withdrawRequest = async (req, res) => {
   try {
-    const userId = req.user.user_id;
+    const userId = req.userInfo.user_id;
     const { teamId } = req.params;
 
     const request = await TeamJoinRequest.findOne({
@@ -85,7 +85,7 @@ exports.withdrawRequest = async (req, res) => {
 // GET REQUEST STATUS
 exports.getRequestStatus = async (req, res) => {
   try {
-    const userId = req.user.user_id;
+    const userId = req.userInfo.user_id;
     const { teamId } = req.params;
 
     const request = await TeamJoinRequest.findOne({
@@ -120,7 +120,6 @@ exports.getAllRequests = async (req, res) => {
     res.json({ requests });
   } catch (err) {
     console.log(err);
-
     res.status(500).json({ message: "Server error" });
   }
 };
