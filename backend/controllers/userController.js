@@ -43,7 +43,7 @@ exports.updateUser = async (req, res) => {
     }
 
     res.json({
-      message: "Profile updated",
+      message: "User Profile Updated",
       user,
     });
   } catch (err) {
