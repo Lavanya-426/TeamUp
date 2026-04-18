@@ -55,6 +55,7 @@ const checkProjectConstraint = (mode = "send") => {
       req.targetTeam = targetTeam; // reuse in controller
       next();
     } catch (err) {
+      console.log(err);
       res.status(500).json({ message: "Server error" });
     }
   };

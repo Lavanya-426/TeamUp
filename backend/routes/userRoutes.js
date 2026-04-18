@@ -6,7 +6,7 @@ const {
   updateUser,
   changePassword,
 } = require("../controllers/userController");
-const verifyJWT = require("../middleware/authMiddleware");
+const verifyJWT = require("../middleware/jwtVerifyingMiddleware.js");
 
 router.get("/me", verifyJWT, getUserProfile);
 router.put("/update", verifyJWT, updateUser);

@@ -3,7 +3,7 @@ const TeamMembership = require("../models/TeamMembership");
 const requireAdmin = (teamIdParam = "teamId") => {
   return async (req, res, next) => {
     try {
-      const userId = req.user.user_id;
+      const userId = req.userInfo.id;
       const teamId = req.params[teamIdParam];
 
       const membership = await TeamMembership.findOne({
@@ -17,6 +17,7 @@ const requireAdmin = (teamIdParam = "teamId") => {
 
       next();
     } catch (err) {
+      console.log(err);
       return res.status(500).json({ message: "Server error" });
     }
   };

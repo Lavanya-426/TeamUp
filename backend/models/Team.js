@@ -34,26 +34,20 @@ const teamSchema = new mongoose.Schema(
       enum: ["OPEN", "FULL"],
       default: "OPEN",
     },
-
-    course_id: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Course",
-      default: null,
-    },
     deadline: {
       type: Date,
       required: true,
     },
-    project_identifier: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "project identifer",
-      required: true,
-    },
-    // Embedded subdocument — holds course/ECS/capstone context
-    // course_id lives inside project_identifier, not duplicated here
-    project_identifier: {
-      type: projectIdentifierSchema,
-      required: true,
+    course: {
+      course_code: {
+        type: String,
+      },
+      teacher: {
+        type: String,
+      },
+      slot: {
+        type: String,
+      },
     },
   },
   { timestamps: true },

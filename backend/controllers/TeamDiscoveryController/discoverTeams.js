@@ -84,6 +84,8 @@ exports.discoverTeams = async (req, res) => {
 
     res.json({ teams });
   } catch (err) {
+    console.log(err);
+
     res.status(500).json({ message: "Server error" });
   }
 };

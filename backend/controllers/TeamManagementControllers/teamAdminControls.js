@@ -3,7 +3,7 @@ const Team = require("../../models/Team.js");
 
 exports.createTeam = async (req, res) => {
   try {
-    const userId = req.user.user_id;
+    const userId = req.userInfo.id;
 
     const team = await Team.create({
       ...req.body,
@@ -18,6 +18,7 @@ exports.createTeam = async (req, res) => {
 
     res.status(201).json({ team });
   } catch (err) {
+    console.log(err);
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -31,6 +32,7 @@ exports.deleteTeam = async (req, res) => {
 
     res.json({ message: "Team deleted" });
   } catch (err) {
+    console.log(err);
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -43,6 +45,8 @@ exports.updateTeam = async (req, res) => {
 
     res.json({ team });
   } catch (err) {
+    console.log(err);
+
     res.status(500).json({ message: "Server error" });
   }
 };

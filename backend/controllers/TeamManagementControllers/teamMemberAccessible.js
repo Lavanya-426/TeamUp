@@ -13,6 +13,8 @@ exports.getTeamDetails = async (req, res) => {
 
     res.json({ team });
   } catch (err) {
+    console.log(err);
+
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -27,6 +29,8 @@ exports.getTeamMembers = async (req, res) => {
 
     res.json({ members });
   } catch (err) {
+    console.log(err);
+
     res.status(500).json({ message: "Server error" });
   }
 };

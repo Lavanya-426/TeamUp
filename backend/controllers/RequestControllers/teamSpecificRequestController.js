@@ -49,6 +49,8 @@ exports.sendRequest = async (req, res) => {
 
     res.status(201).json({ request });
   } catch (err) {
+    console.log(err);
+
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -74,6 +76,8 @@ exports.withdrawRequest = async (req, res) => {
 
     res.json({ message: "Request withdrawn" });
   } catch (err) {
+    console.log(err);
+
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -95,6 +99,8 @@ exports.getRequestStatus = async (req, res) => {
 
     res.json({ status: request.status });
   } catch (err) {
+    console.log(err);
+
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -113,6 +119,8 @@ exports.getAllRequests = async (req, res) => {
 
     res.json({ requests });
   } catch (err) {
+    console.log(err);
+
     res.status(500).json({ message: "Server error" });
   }
 };

@@ -22,7 +22,7 @@ exports.getUserProfile = async (req, res) => {
 // UPDATE USER PROFILE
 exports.updateUser = async (req, res) => {
   try {
-    const { userId } = req.body;
+    const userId = req.userInfo.id;
 
     const updates = {
       name: req.body.name,
@@ -54,7 +54,8 @@ exports.updateUser = async (req, res) => {
 // CHANGE PASSWORD
 exports.changePassword = async (req, res) => {
   try {
-    const { userId, oldPassword, newPassword } = req.body;
+    const userId = req.userInfo.id;
+    const { oldPassword, newPassword } = req.body;
 
     const user = await User.findById(userId);
 

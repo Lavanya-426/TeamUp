@@ -42,6 +42,8 @@ exports.approveRequest = async (req, res) => {
 
     res.json({ message: "Approved" });
   } catch (err) {
+    console.log(err);
+
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -66,6 +68,8 @@ exports.rejectRequest = async (req, res) => {
 
     res.json({ message: "Rejected" });
   } catch (err) {
+    console.log(err);
+
     res.status(500).json({ message: "Server error" });
   }
 };

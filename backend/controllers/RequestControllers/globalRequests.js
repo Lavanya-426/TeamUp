@@ -24,6 +24,8 @@ exports.viewReceivedRequests = async (req, res) => {
 
     return res.json({ requests });
   } catch (err) {
+    console.log(err);
+
     return res.status(500).json({ message: "Server error" });
   }
 };
@@ -55,6 +57,7 @@ exports.viewSentRequests = async (req, res) => {
     ]).populate("team_id", "team_name");
     return res.json({ requests });
   } catch (err) {
+    console.log(err);
     return res.status(500).json({ message: "Server error" });
   }
 };
