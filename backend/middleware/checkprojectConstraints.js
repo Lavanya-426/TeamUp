@@ -11,7 +11,7 @@ const checkProjectConstraint = (mode = "send") => {
 
       // SEND REQUEST
       if (mode === "send") {
-        userId = req.user.user_id;
+        userId = req.userInfo.id;
 
         const { teamId } = req.params;
 
@@ -32,7 +32,7 @@ const checkProjectConstraint = (mode = "send") => {
           return res.status(404).json({ message: "Request not found" });
         }
 
-        userId = request.user_id;
+        userId = request.id;
 
         targetTeam = await Team.findById(request.team_id);
 

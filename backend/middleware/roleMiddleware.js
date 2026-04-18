@@ -7,11 +7,13 @@ const requireAdmin = (teamIdParam = "teamId") => {
       const teamId = req.params[teamIdParam];
 
       const membership = await TeamMembership.findOne({
-        student_id: userId,
+        user_id: userId,
         team_id: teamId,
       });
 
-      if (!membership || membership.role !== "admin") {
+      if (!membership)
+        return res.status(404).json({ message: "Team doesn't exist" });
+      if (membership.role !== "admin") {
         return res.status(403).json({ message: "Admin access required" });
       }
 
