@@ -1,6 +1,6 @@
 const TeamMembership = require("../../models/TeamMembership.js");
 const joinRequest = require("../../models/Request.js");
-
+const mongoose = require("mongoose");
 exports.viewReceivedRequests = async (req, res) => {
   try {
     const userId = req.userInfo.id;
@@ -14,10 +14,11 @@ exports.viewReceivedRequests = async (req, res) => {
     const teamIds = adminTeams.map((t) => t.team_id);
 
     // 2. get all pending requests for those teams
-    const requests = await TeamJoinRequest.find({
-      team_id: { $in: teamIds },
-      status: "pending",
-    })
+    const requests = await joinRequest
+      .find({
+        team_id: { $in: teamIds },
+        status: "pending",
+      })
       .populate("user_id", "name email")
       .populate("team_id", "teamName")
       .sort({ createdAt: -1 }); // newest first;
@@ -32,11 +33,10 @@ exports.viewReceivedRequests = async (req, res) => {
 
 exports.viewSentRequests = async (req, res) => {
   try {
-    const userId = req.userInfo.id;
-
-    const requests = await TeamJoinRequest.aggregate([
-      { $match: { student_id: userId } },
-
+    const userId = new mongoose.Types.ObjectId(req.userInfo.id);
+    console.log("in view sent req function");
+    const requests = await joinRequest.aggregate([
+      { $match: { user_id: userId } },
       {
         $addFields: {
           statusPriority: {
@@ -53,8 +53,8 @@ exports.viewSentRequests = async (req, res) => {
         },
       },
 
-      { $sort: { statusPriority: 1, createdAt: -1 } },
-    ]).populate("team_id", "teamName");
+      { $sort: { statusPriority: 1, requestedAt: -1 } },
+    ]);
     return res.json({ requests });
   } catch (err) {
     console.log(err);
