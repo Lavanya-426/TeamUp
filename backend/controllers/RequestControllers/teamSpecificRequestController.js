@@ -9,7 +9,9 @@ exports.sendRequest = async (req, res) => {
     const { teamId } = req.params;
     const targetTeam = req.targetTeam;
 
-    // already member?
+    const scope = targetTeam.scope; // use stored scope
+
+    // already a member of THIS team?
     const isMember = await TeamMembership.findOne({
       user_id: userId,
       team_id: teamId,
@@ -19,41 +21,54 @@ exports.sendRequest = async (req, res) => {
       return res.status(400).json({ message: "Already a member" });
     }
 
+    // already in another team in SAME scope?
+    const existingMembership = await TeamMembership.findOne({
+      user_id: userId,
+      scope,
+    });
+
+    if (existingMembership) {
+      return res.status(400).json({
+        message: "Already in a team for this project",
+      });
+    }
+
     // team full check
     if (targetTeam.current_members >= targetTeam.max_members) {
       return res.status(400).json({ message: "Team is full" });
     }
 
-    // existing request
+    // existing request for SAME team
     const existingRequest = await TeamJoinRequest.findOne({
       user_id: userId,
       team_id: teamId,
     });
 
     if (existingRequest) {
-      if (existingRequest.status === "pending") {
-        return res.status(400).json({ message: "Request already sent" });
-      }
-
-      existingRequest.status = "pending";
-      existingRequest.respondedAt = null;
-      await existingRequest.save();
-
-      return res.status(200).json({ request: existingRequest });
+      return res.status(400).json({ message: "Request already sent" });
     }
 
+    // create new request
     const request = await TeamJoinRequest.create({
       user_id: userId,
       team_id: teamId,
+      scope,
     });
 
     res.status(201).json({ request });
   } catch (err) {
     console.log(err);
 
+    if (err.code === 11000) {
+      return res.status(400).json({
+        message: "Duplicate request",
+      });
+    }
+
     res.status(500).json({ message: "Server error" });
   }
 };
+
 // WITHDRAW REQUEST
 exports.withdrawRequest = async (req, res) => {
   try {
@@ -72,6 +87,7 @@ exports.withdrawRequest = async (req, res) => {
 
     // update status
     request.status = "withdrawn";
+    request.respondedAt = new Date();
     await request.save();
 
     res.json({ message: "Request withdrawn" });
@@ -91,7 +107,7 @@ exports.getRequestStatus = async (req, res) => {
     const request = await TeamJoinRequest.findOne({
       user_id: userId,
       team_id: teamId,
-    }).sort({ createdAt: -1 });
+    });
 
     if (!request) {
       return res.json({ status: "none" });
