@@ -5,7 +5,7 @@ const requireAdmin = (teamIdParam = "teamId") => {
     try {
       const userId = req.userInfo.id;
       const teamId = req.params[teamIdParam];
-
+      console.log(userId, teamId);
       const membership = await TeamMembership.findOne({
         user_id: userId,
         team_id: teamId,
