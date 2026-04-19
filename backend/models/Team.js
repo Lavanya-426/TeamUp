@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-
 const teamSchema = new mongoose.Schema(
   {
     teamName: { type: String, required: true },
@@ -10,13 +9,19 @@ const teamSchema = new mongoose.Schema(
       required: true,
     },
 
+    scope: {
+      type: String,
+      required: true,
+      index: true, // for discovery
+    },
+
     urgency: {
       type: String,
       enum: ["mild", "moderate", "urgent"],
       required: true,
     },
 
-    max_members: { type: Number, required: true },
+    max_members: { type: Number, required: true, min: 1 },
 
     description: { type: String },
 
@@ -33,20 +38,16 @@ const teamSchema = new mongoose.Schema(
       enum: ["OPEN", "FULL"],
       default: "OPEN",
     },
+
     deadline: {
       type: Date,
       required: true,
     },
+
     course: {
-      course_code: {
-        type: String,
-      },
-      teacher: {
-        type: String,
-      },
-      slot: {
-        type: String,
-      },
+      course_code: String,
+      teacher: String,
+      slot: String,
     },
   },
   { timestamps: true },
