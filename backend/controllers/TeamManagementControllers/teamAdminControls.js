@@ -4,17 +4,49 @@ const Team = require("../../models/Team.js");
 exports.createTeam = async (req, res) => {
   try {
     const userId = req.userInfo.id;
+    const scope = req.body.scope;
 
-    const team = await Team.create({
-      ...req.body,
-      created_by: userId,
-    });
+    // Optional pre-check
+    const existing = await Team.findOne({ created_by: userId, scope });
+    if (existing) {
+      return res.status(400).json({
+        message: "You already created a team for this scope",
+      });
+    }
 
-    await TeamMembership.create({
-      user_id: userId,
-      team_id: team._id,
-      role: "admin",
-    });
+    let team;
+
+    try {
+      team = await Team.create({
+        ...req.body,
+        created_by: userId,
+      });
+    } catch (err) {
+      if (err.code === 11000) {
+        return res.status(400).json({
+          message: "You already created a team for this scope",
+        });
+      }
+      throw err;
+    }
+    // Create membership
+    try {
+      await TeamMembership.create({
+        user_id: userId,
+        team_id: team._id,
+        scope,
+        role: "admin",
+      });
+    } catch (err) {
+      await Team.findByIdAndDelete(team._id); // rollback
+
+      if (err.code === 11000) {
+        return res.status(400).json({
+          message: "User already joined a team in this scope",
+        });
+      }
+      throw err;
+    }
 
     res.status(201).json({ team });
   } catch (err) {
