@@ -12,16 +12,23 @@ const requestSchema = new mongoose.Schema(
       ref: "Team",
       required: true,
     },
+
+    scope: {
+      type: String,
+      required: true,
+      index: true, // for updateMany
+    },
+
     status: {
       type: String,
       enum: ["pending", "accepted", "rejected", "withdrawn"],
       default: "pending",
     },
+
     respondedAt: {
       type: Date,
     },
   },
-
   {
     timestamps: { createdAt: "requestedAt", updatedAt: "updatedAt" },
   },
@@ -29,5 +36,7 @@ const requestSchema = new mongoose.Schema(
 
 // Prevent a user from having more than one request document per team
 requestSchema.index({ user_id: 1, team_id: 1 }, { unique: true });
+// For efficient lookup of pending requests by user and scope
+requestSchema.index({ user_id: 1, scope: 1, status: 1 });
 
 module.exports = mongoose.model("Request", requestSchema);
