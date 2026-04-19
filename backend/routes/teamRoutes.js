@@ -4,6 +4,7 @@ const checkProjectConstraint = require("../middleware/checkProjectConstraints");
 
 const verifyJWT = require("../middleware/jwtVerifyingMiddleware.js");
 const requireAdmin = require("../middleware/roleMiddleware.js");
+const buildScope = require("../utils/scopeBuilder.js");
 const {
   createTeam,
   deleteTeam,
@@ -16,11 +17,13 @@ const {
 } = require("../controllers/TeamManagementControllers/teamMemberAccessible.js");
 
 const {
+  getAllTeams,
   getAdminTeams,
   getMemberTeams,
 } = require("../controllers/TeamManagementControllers/getTeamsController.js");
-router.post("/", verifyJWT, createTeam);
 
+router.post("/", verifyJWT, buildScope, createTeam);
+router.get("/", getAllTeams);
 router.get("/admin", verifyJWT, getAdminTeams);
 router.get("/member", verifyJWT, getMemberTeams);
 
