@@ -20,6 +20,7 @@ const checkProjectConstraint = (mode = "send") => {
         if (!targetTeam) {
           return res.status(404).json({ message: "Team not found" });
         }
+        console.log("team found");
       }
 
       // APPROVE REQUEST
@@ -45,7 +46,7 @@ const checkProjectConstraint = (mode = "send") => {
       }).populate("team_id");
 
       for (let m of memberships) {
-        if (isSameProject(m.team_id, targetTeam)) {
+        if (m.team_id === targetTeam._id) {
           return res.status(400).json({
             message: "Already part of a team for this project",
           });

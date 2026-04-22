@@ -23,4 +23,4 @@ const isSameProject = (teamA, teamB) => {
   return false;
 };
 
-export default isSameProject;
+module.exports = isSameProject;

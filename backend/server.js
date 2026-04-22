@@ -16,6 +16,14 @@ app.get("/", (req, res) => {
   res.send("hello");
 });
 
+const cors = require("cors");
+
+app.use(
+  cors({
+    origin: "http://localhost:3000", // or 3001
+  }),
+);
+
 const authRoutes = require("./routes/authRoutes");
 app.use("/api/auth", authRoutes);
 
@@ -31,8 +39,8 @@ app.use("/api/users", userRoutes);
 const discoveryRoutes = require("./routes/teamDiscoveryRoutes");
 app.use("/api/discover", discoveryRoutes);
 
-app.listen(3000, () => {
-  console.log("Server running on http://localhost:3000");
+app.listen(5000, () => {
+  console.log("Server running on http://localhost:5000");
 });
 
 module.exports = app;
