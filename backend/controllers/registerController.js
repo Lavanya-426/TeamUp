@@ -1,12 +1,12 @@
 const User = require("../models/User");
 const bcrypt = require("bcrypt");
+const generateToken = require("../utils/jwtUtil.js");
 
 //register user
 exports.registerUser = async (req, res) => {
   try {
     const {
       name,
-      email,
       mobile,
       password,
       degree,
@@ -15,9 +15,9 @@ exports.registerUser = async (req, res) => {
       specialization,
       year,
     } = req.body;
-
+    const email = req.email;
     //basic validation
-    if (!name || !email || !password)
+    if (!name || !password)
       return res.status(422).json({ message: "Required fields missing" });
 
     if (!email.endsWith("@vitapstudent.ac.in")) {
@@ -47,9 +47,11 @@ exports.registerUser = async (req, res) => {
       specialization,
       year,
     });
+    const token = generateToken(user);
 
     res.status(201).json({
       message: "User created successfully",
+      token,
       user: {
         id: user._id,
         name: user.name,
