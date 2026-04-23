@@ -5,7 +5,7 @@ const teamSchema = new mongoose.Schema(
 
     type: {
       type: String,
-      enum: ["COURSE", "ECS1", "ECS2", "CAPSTONE"],
+      enum: ["COURSE", "ECS1", "ECS2", "CAPSTONE", "SDP"],
       required: true,
     },
 
