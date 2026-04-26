@@ -14,7 +14,6 @@ const {
 const {
   sendRequest,
   withdrawRequest,
-  getRequestStatus,
   getAllRequests,
 } = require("../controllers/RequestControllers/teamSpecificRequestController");
 
@@ -30,7 +29,7 @@ router.get("/sent", verifyJWT, viewSentRequests);
 // TEAM-SPECIFIC
 router.post("/:teamId", verifyJWT, checkProjectConstraint("send"), sendRequest);
 router.delete("/:teamId", verifyJWT, withdrawRequest);
-router.get("/:teamId/me", verifyJWT, getRequestStatus);
+//router.get("/:teamId/me", verifyJWT, getRequestStatus);
 
 router.get("/:teamId", verifyJWT, requireAdmin("teamId"), getAllRequests);
 
