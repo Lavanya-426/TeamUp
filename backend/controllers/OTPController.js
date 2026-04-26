@@ -1,4 +1,5 @@
 const OTP = require("../models/OTP");
+const User = require("../models/User");
 const bcrypt = require("bcrypt");
 const transporter = require("../config/mailer");
 const { generateOTP } = require("../utils/otpGenerator");
@@ -12,6 +13,12 @@ exports.sendOtp = async (req, res) => {
 
     const existing = await OTP.findOne({ email });
 
+    const alreadyRegistered = await User.findOne({ email });
+    if (alreadyRegistered) {
+      return res.status(400).json({
+        message: "Email already registered",
+      });
+    }
     if (existing && Date.now() < existing.expiresAt - 4 * 60 * 1000) {
       return res.status(429).json({
         message: "Please wait before requesting OTP again",
@@ -60,6 +67,7 @@ If you didn’t request this, you can safely ignore this email.
 
     res.json({ message: "OTP sent" });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Failed to send OTP" });
   }
 };
