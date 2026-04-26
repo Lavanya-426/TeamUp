@@ -98,29 +98,6 @@ exports.withdrawRequest = async (req, res) => {
   }
 };
 
-// GET REQUEST STATUS
-exports.getRequestStatus = async (req, res) => {
-  try {
-    const userId = req.userInfo.user_id;
-    const { teamId } = req.params;
-
-    const request = await TeamJoinRequest.findOne({
-      user_id: userId,
-      team_id: teamId,
-    });
-
-    if (!request) {
-      return res.json({ status: "none" });
-    }
-
-    res.json({ status: request.status });
-  } catch (err) {
-    console.log(err);
-
-    res.status(500).json({ message: "Server error" });
-  }
-};
-
 // GET ALL REQUESTS (ADMIN ONLY → handled by middleware)
 exports.getAllRequests = async (req, res) => {
   try {
