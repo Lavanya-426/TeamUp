@@ -32,7 +32,7 @@ app.use("/api/requests", require("./routes/requestRoutes"));
 app.use("/api/teams", require("./routes/teamRoutes"));
 app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/discover", require("./routes/teamDiscoveryRoutes"));
-
+app.use("/api/messages", require("./routes/messageRoutes"));
 // Create HTTP server using Express app
 const server = http.createServer(app);
 
@@ -44,7 +44,8 @@ const io = new Server(server, {
 });
 
 // Import and initialize socket logic
-require("./sockets")(io);
+const socket = require("./sockets/index");
+socket(io);
 
 // Start server
 server.listen(5000, () => {
