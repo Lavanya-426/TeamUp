@@ -41,10 +41,18 @@ exports.getMemberTeams = async (req, res) => {
 
 exports.getAllTeams = async (req, res) => {
   try {
-    const t = await Team.find();
-    res.json(t);
+    const userId = req.userInfo.id;
+
+    const memberships = await TeamMembership.find({
+      user_id: userId,
+    }).populate("team_id");
+
+    const teams = memberships.map((m) => m.team_id);
+
+    res.json({ teams });
   } catch (err) {
     console.log(err);
+
     res.status(500).json({ message: "Server error" });
   }
 };
