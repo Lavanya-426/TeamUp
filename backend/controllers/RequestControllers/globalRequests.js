@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 exports.viewReceivedRequests = async (req, res) => {
   try {
     const userId = req.userInfo.id;
-
+    console.log("in receiving req");
     // 1. find teams where user is admin
     const adminTeams = await TeamMembership.find({
       user_id: userId,
@@ -23,6 +23,7 @@ exports.viewReceivedRequests = async (req, res) => {
       .populate("team_id", "teamName")
       .sort({ createdAt: -1 }); // newest first;
 
+    console.log(requests);
     return res.json({ requests });
   } catch (err) {
     console.log(err);
@@ -30,13 +31,27 @@ exports.viewReceivedRequests = async (req, res) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
-
 exports.viewSentRequests = async (req, res) => {
   try {
     const userId = new mongoose.Types.ObjectId(req.userInfo.id);
-    console.log("in view sent req function");
+    console.log("in sending req");
+
     const requests = await joinRequest.aggregate([
       { $match: { user_id: userId } },
+
+      // JOIN TEAM DATA
+      {
+        $lookup: {
+          from: "teams", // collection name (check exact name!)
+          localField: "team_id",
+          foreignField: "_id",
+          as: "team",
+        },
+      },
+
+      { $unwind: "$team" }, // convert array → object
+
+      // SORT PRIORITY
       {
         $addFields: {
           statusPriority: {
@@ -55,6 +70,7 @@ exports.viewSentRequests = async (req, res) => {
 
       { $sort: { statusPriority: 1, requestedAt: -1 } },
     ]);
+
     return res.json({ requests });
   } catch (err) {
     console.log(err);

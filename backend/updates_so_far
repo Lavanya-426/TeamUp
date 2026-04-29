@@ -142,3 +142,20 @@ await session.abortTransaction();
 if (session) session.endSession();
 }
 };
+
+
+function computeNeedsDiversity({ adminSpec, maxMembers, userChoice }) {
+  const isCSE = normalize(adminSpec) === "CSE";
+
+  
+
+  if (maxMembers === 6) {
+    if (!isCSE) {
+    return false; // non-CSE teams already had diversity since atleast one ece/mech person
+  }
+  else return true;
+  } else return Boolean(userChoice);
+
+  // admin explicitly decides
+  
+}

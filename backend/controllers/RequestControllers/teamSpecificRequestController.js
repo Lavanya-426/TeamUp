@@ -1,61 +1,84 @@
 const TeamMembership = require("../../models/TeamMembership.js");
 const TeamJoinRequest = require("../../models/Request.js");
 
-// SEND REQUEST
-
 exports.sendRequest = async (req, res) => {
   try {
+    console.log("in send request controller");
+
     const userId = req.userInfo.id;
     const { teamId } = req.params;
     const targetTeam = req.targetTeam;
 
-    const scope = targetTeam.scope; // use stored scope
+    const scope = targetTeam.scope;
 
-    // already a member of THIS team?
-    const isMember = await TeamMembership.findOne({
-      user_id: userId,
-      team_id: teamId,
-    });
+    //  Run independent queries in parallel
+    const [membership, pendingReq, existingRequest] = await Promise.all([
+      // membership check (same team OR same scope)
+      TeamMembership.findOne({
+        user_id: userId,
+        $or: [{ team_id: teamId }, { scope }],
+      }).lean(),
 
-    if (isMember) {
-      return res.status(400).json({ message: "Already a member" });
+      // pending request check
+      TeamJoinRequest.findOne({
+        user_id: userId,
+        team_id: teamId,
+        status: "pending",
+      }).lean(),
+
+      // any existing request (for reuse)
+      TeamJoinRequest.findOne({
+        user_id: userId,
+        team_id: teamId,
+      }),
+    ]);
+
+    // Already a member
+    if (membership) {
+      if (String(membership.team_id) === String(teamId)) {
+        return res
+          .status(400)
+          .json({ message: "Already a member of this team" });
+      }
+
+      return res
+        .status(400)
+        .json({ message: "Already in a team for this project" });
     }
 
-    // already in another team in SAME scope?
-    const existingMembership = await TeamMembership.findOne({
-      user_id: userId,
-      scope,
-    });
-
-    if (existingMembership) {
-      return res.status(400).json({
-        message: "Already in a team for this project",
-      });
-    }
-
-    // team full check
+    //  Team full
     if (targetTeam.current_members >= targetTeam.max_members) {
       return res.status(400).json({ message: "Team is full" });
     }
 
-    // existing request for SAME team
-    const existingRequest = await TeamJoinRequest.findOne({
-      user_id: userId,
-      team_id: teamId,
-    });
-
-    if (existingRequest) {
+    //  Already pending
+    if (pendingReq) {
       return res.status(400).json({ message: "Request already sent" });
     }
 
-    // create new request
+    //  Reuse existing request (withdrawn/rejected)
+    if (existingRequest) {
+      existingRequest.status = "pending";
+      existingRequest.respondedAt = null;
+      await existingRequest.save();
+
+      return res.status(200).json({
+        message: "Request sent again",
+        request: existingRequest,
+      });
+    }
+
+    //  Create new request
     const request = await TeamJoinRequest.create({
       user_id: userId,
       team_id: teamId,
       scope,
     });
 
-    res.status(201).json({ request });
+    return res.status(201).json({
+      message: "Request sent",
+      request,
+    });
   } catch (err) {
     console.log(err);
 
@@ -65,14 +88,13 @@ exports.sendRequest = async (req, res) => {
       });
     }
 
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: "Server error" });
   }
 };
-
 // WITHDRAW REQUEST
 exports.withdrawRequest = async (req, res) => {
   try {
-    const userId = req.userInfo.user_id;
+    const userId = req.userInfo.id;
     const { teamId } = req.params;
 
     const request = await TeamJoinRequest.findOne({

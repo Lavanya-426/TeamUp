@@ -11,6 +11,7 @@ const checkProjectConstraint = (mode = "send") => {
 
       // SEND REQUEST
       if (mode === "send") {
+        console.log("in checkProjectConstraint middleware for sending request");
         userId = req.userInfo.id;
 
         const { teamId } = req.params;

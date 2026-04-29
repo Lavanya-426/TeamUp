@@ -1,20 +1,25 @@
 const Team = require("../../models/Team");
 const TeamMembership = require("../../models/TeamMembership");
-const isSameProject = require("../../utils/projectIdentifierUtils");
-const getRequestStatus = require("../../utils/getRequestStatus");
+const TeamJoinRequest = require("../../models/Request");
 
 exports.discoverTeams = async (req, res) => {
   try {
     const userId = req.userInfo.id;
     const scope = req.body.scope;
 
-    const existing = await TeamMembership.findOne({ user_id: userId, scope });
-    if (existing) {
+    // If already in a team for this scope → block
+    const existingMembership = await TeamMembership.findOne({
+      user_id: userId,
+      scope,
+    });
+
+    if (existingMembership) {
       return res.status(400).json({
-        message: `You already a part of a team for this ${req.body.type}`,
+        message: `You are already part of a team for this ${req.body.type}`,
       });
     }
 
+    // Fetch all OPEN teams in this scope
     const teams = await Team.aggregate([
       {
         $match: {
@@ -34,23 +39,40 @@ exports.discoverTeams = async (req, res) => {
               default: 4,
             },
           },
-          spotsLeft: { $subtract: ["$max_members", "$current_members"] },
+          spotsLeft: {
+            $subtract: ["$max_members", "$current_members"],
+          },
         },
       },
       {
         $sort: {
-          deadline: 1, // earliest deadline first
-          urgencyRank: 1, // urgent first
-          spotsLeft: -1, // more spots left first
+          deadline: 1,
+          urgencyRank: 1,
+          spotsLeft: -1,
         },
       },
     ]);
-    teams.forEach((team) => {
-      team.canRequest = getRequestStatus(team._id, userId);
-    });
-    res.json({ teams });
+
+    // Fetch ALL pending requests of this user (ONLY ONCE)
+    const requests = await TeamJoinRequest.find({
+      user_id: userId,
+      status: "pending",
+    })
+      .select("team_id")
+      .lean();
+
+    // Convert to Set for O(1) lookup
+    const requestedTeamIds = new Set(requests.map((r) => String(r.team_id)));
+
+    //  Attach canRequest field
+    const teamsWithStatus = teams.map((team) => ({
+      ...team,
+      canRequest: requestedTeamIds.has(String(team._id)) ? "pending" : "none",
+    }));
+
+    return res.json({ teams: teamsWithStatus });
   } catch (err) {
     console.log(err);
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: "Server error" });
   }
 };

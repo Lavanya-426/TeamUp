@@ -10,7 +10,7 @@ async function getRequestStatus(teamId, userId) {
     });
 
     if (!request) {
-      return "not found";
+      return "none";
     }
 
     return request.status;

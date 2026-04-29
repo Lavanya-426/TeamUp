@@ -27,11 +27,11 @@ async function buildScope(req, res, next) {
 
     //  CAPSTONE
     else if (team.type === "CAPSTONE") {
-      let specialization = req.user?.specialization;
+      let specialization = req.userInfo?.specialization;
 
       // fallback if not attached earlier
       if (!specialization) {
-        const userId = req.userInfo?.userId;
+        const userId = req.userInfo?.id;
 
         if (!userId) {
           throw new Error("User not authenticated");

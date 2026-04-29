@@ -27,6 +27,7 @@ const teamMemberSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  lastSeenAt: { type: Date, default: Date.now },
 });
 
 teamMemberSchema.index({ user_id: 1, scope: 1 }, { unique: true });
