@@ -14,7 +14,7 @@ function Layout({ children }) {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // 🔹 FETCH USER
+  // FETCH USER
   useEffect(() => {
     const fetchUser = async () => {
       const token = localStorage.getItem("token");
@@ -31,8 +31,7 @@ function Layout({ children }) {
 
     fetchUser();
   }, []);
-
-  // 🔹 FETCH UNREAD TEAM COUNT (for 💬 icon)
+  //  FETCH UNREAD TEAM COUNT (for message icon)
   useEffect(() => {
     const fetchUnread = async () => {
       try {
@@ -46,7 +45,7 @@ function Layout({ children }) {
 
         const data = await res.json();
 
-        // ✅ COUNT TEAMS WITH UNREAD MESSAGES
+        //  COUNT TEAMS WITH UNREAD MESSAGES
         const teamUnreadCount = data.teams.filter(
           (team) => team.hasNewMessages,
         ).length;
@@ -58,11 +57,11 @@ function Layout({ children }) {
     };
 
     fetchUnread();
-  }, [location.pathname]); // 🔁 refresh when route changes
+  }, [location.pathname]); //  refresh when route changes
 
   return (
     <div className="min-h-screen bg-[#B0E0E6]">
-      {/* 🔹 HEADER */}
+      {/*  HEADER */}
       <div className="bg-white flex justify-between items-center px-6 py-4 shadow fixed top-0 left-0 w-full z-50">
         <div className="flex items-center gap-4">
           <Menu onClick={() => setOpen(!open)} className="cursor-pointer" />
@@ -76,7 +75,7 @@ function Layout({ children }) {
             className="cursor-pointer hover:text-blue-500"
           />
 
-          {/* 💬 MESSAGES WITH BADGE */}
+          {/* MESSAGES WITH BADGE */}
           <div className="relative">
             <MessageCircle
               onClick={() => navigate("/messages")}
