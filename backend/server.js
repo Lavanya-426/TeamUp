@@ -11,9 +11,20 @@ const connectDB = require("./config/db");
 const app = express();
 
 // Middleware
+const cors = require("cors");
+
+const allowedOrigins = [process.env.CLIENT_URL];
+
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Blocked by CORS"));
+      }
+    },
+    credentials: true,
   }),
 );
 app.use(express.json());
@@ -39,7 +50,9 @@ const server = http.createServer(app);
 // Setup Socket.IO with CORS
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: process.env.CLIENT_URL,
+    methods: ["GET", "POST"],
+    credentials: true,
   },
 });
 
@@ -47,7 +60,8 @@ const io = new Server(server, {
 const socket = require("./sockets/index");
 socket(io);
 
+const PORT = process.env.PORT;
 // Start server
-server.listen(5000, () => {
-  console.log("Server running on http://localhost:5000");
+server.listen(PORT, () => {
+  console.log("Server running");
 });
