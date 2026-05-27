@@ -20,7 +20,7 @@ function Messages() {
     const fetchTeams = async () => {
       const token = localStorage.getItem("token");
 
-      const res = await fetch("import.meta.env.VITE_API_URL/api/teams/", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/teams/`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 

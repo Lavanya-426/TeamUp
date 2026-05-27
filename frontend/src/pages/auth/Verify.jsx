@@ -26,7 +26,7 @@ export default function Register() {
 
     try {
       const res = await fetch(
-        "import.meta.env.VITE_API_URL/api/auth/send-otp",
+        `${import.meta.env.VITE_API_URL}/api/auth/send-otp`,
         {
           method: "POST",
           headers: {

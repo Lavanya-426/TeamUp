@@ -18,9 +18,12 @@ function MemberTeams() {
     const fetchTeams = async () => {
       const token = localStorage.getItem("token");
 
-      const res = await fetch("import.meta.env.VITE_API_URL/api/teams/member", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/teams/member`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
 
       const data = await res.json();
       setTeams(data.teams || []);

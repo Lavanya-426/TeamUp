@@ -4,7 +4,7 @@ import Layout from "../../components/common/Layout";
 
 function Dashboard() {
   const navigate = useNavigate();
-  const options = ["Create Team", "Join Team", "Your Projects"];
+  const options = ["Create Team", "Join Team", "Your Teams"];
   const [visible, setVisible] = useState([]);
 
   useEffect(() => {

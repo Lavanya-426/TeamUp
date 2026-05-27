@@ -27,14 +27,17 @@ export default function Profile() {
 
     console.log("TEMP TOKEN:", tempToken); // debug
 
-    const res = await fetch("import.meta.env.VITE_API_URL/api/auth/register", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${tempToken}`, // ✅ VERY IMPORTANT
+    const res = await fetch(
+      `${import.meta.env.VITE_API_URL}/api/auth/register`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${tempToken}`, // VERY IMPORTANT
+        },
+        body: JSON.stringify(form),
       },
-      body: JSON.stringify(form),
-    });
+    );
 
     const data = await res.json();
     console.log("REGISTER RESPONSE:", data);
