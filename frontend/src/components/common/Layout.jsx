@@ -1,9 +1,7 @@
 import { useState, useEffect } from "react";
 import { Menu, Home, MessageCircle, User } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
-import io from "socket.io-client";
-
-const socket = io("import.meta.env.VITE_API_URLAPI_URL");
+import socket from "../../services/socket";
 
 function Layout({ children }) {
   const [open, setOpen] = useState(false);
@@ -39,12 +37,13 @@ function Layout({ children }) {
         import.meta.env.VITE_API_URL;
         const token = localStorage.getItem("token");
 
-        const res = await fetch("import.meta.env.VITE_API_URL/api/teams/", {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/teams/`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
         if (!res.ok) return;
-
+        console.log(res);
+        console.log(res.url);
         const data = await res.json();
 
         //  COUNT TEAMS WITH UNREAD MESSAGES
