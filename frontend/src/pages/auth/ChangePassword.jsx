@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Layout from "../components/Layout";
+import Layout from "../../components/common/Layout";
 
 function ChangePassword() {
   const [oldPassword, setOldPassword] = useState("");
@@ -23,7 +23,7 @@ function ChangePassword() {
 
     try {
       const res = await fetch(
-        "http://localhost:5000/api/users/change-password",
+        `${import.meta.env.VITE_API_URL}/api/users/change-password`,
         {
           method: "PUT",
           headers: {

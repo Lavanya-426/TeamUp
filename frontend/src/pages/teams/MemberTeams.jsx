@@ -1,13 +1,11 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom"; // ✅ ADD THIS
-import Layout from "../components/Layout";
-import UserTeamCard from "../components/UserTeamCard";
+import { useNavigate } from "react-router-dom";
+import UserTeamCard from "../../components/teamcards/UserTeamCard";
+import Layout from "../../components/common/Layout";
 
-function Messages() {
+function MemberTeams() {
   const [teams, setTeams] = useState([]);
-  const [unreadTeams, setUnreadTeams] = useState([]);
-
-  const navigate = useNavigate(); // ADD THIS
+  const navigate = useNavigate();
 
   // MOVE INSIDE COMPONENT
   const handleMessage = (team) => {
@@ -20,18 +18,12 @@ function Messages() {
     const fetchTeams = async () => {
       const token = localStorage.getItem("token");
 
-      const res = await fetch("http://localhost:5000/api/teams/", {
+      const res = await fetch("import.meta.env.VITE_API_URL/api/teams/member", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
       const data = await res.json();
-
       setTeams(data.teams || []);
-
-      // FILTER ONLY UNREAD TEAMS
-      const unread = (data.teams || []).filter((team) => team.hasNewMessages);
-
-      setUnreadTeams(unread);
     };
 
     fetchTeams();
@@ -40,16 +32,14 @@ function Messages() {
   return (
     <Layout>
       <div className="p-6 max-w-md mx-auto bg-white rounded-xl shadow">
-        <h2 className="font-bold mb-4">Unread Messages</h2>
+        <h1 className="text-xl font-bold mb-4">Member Teams</h1>
 
-        {/* NO UNREAD */}
-        {unreadTeams.length === 0 && (
-          <p className="text-gray-500 text-sm">No unread messages</p>
+        {teams.length === 0 && (
+          <p className="text-gray-500 text-sm">No teams found</p>
         )}
 
-        {/* SHOW UNREAD TEAMS */}
         <div className="grid gap-4">
-          {unreadTeams.map((team) => (
+          {teams.map((team) => (
             <UserTeamCard
               key={team._id}
               team={team}
@@ -62,4 +52,4 @@ function Messages() {
   );
 }
 
-export default Messages;
+export default MemberTeams;

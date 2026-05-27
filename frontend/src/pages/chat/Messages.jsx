@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import UserTeamCard from "../components/UserTeamCard";
-import Layout from "../components/Layout";
+import Layout from "../../components/common/Layout";
+import UserTeamCard from "../../components/teamcards/UserTeamCard";
 
-function AdminTeams() {
+function Messages() {
   const [teams, setTeams] = useState([]);
-  const navigate = useNavigate();
+  const [unreadTeams, setUnreadTeams] = useState([]);
 
+  const navigate = useNavigate(); // ADD THIS
+
+  // MOVE INSIDE COMPONENT
   const handleMessage = (team) => {
     navigate(`/chat/${team._id}`, {
       state: { teamName: team.teamName },
@@ -17,12 +20,18 @@ function AdminTeams() {
     const fetchTeams = async () => {
       const token = localStorage.getItem("token");
 
-      const res = await fetch("http://localhost:5000/api/teams/admin", {
+      const res = await fetch("import.meta.env.VITE_API_URL/api/teams/", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
       const data = await res.json();
+
       setTeams(data.teams || []);
+
+      // FILTER ONLY UNREAD TEAMS
+      const unread = (data.teams || []).filter((team) => team.hasNewMessages);
+
+      setUnreadTeams(unread);
     };
 
     fetchTeams();
@@ -31,14 +40,16 @@ function AdminTeams() {
   return (
     <Layout>
       <div className="p-6 max-w-md mx-auto bg-white rounded-xl shadow">
-        <h1 className="text-xl font-bold mb-4">Admin Teams</h1>
+        <h2 className="font-bold mb-4">Unread Messages</h2>
 
-        {teams.length === 0 && (
-          <p className="text-gray-500 text-sm">No admin teams</p>
+        {/* NO UNREAD */}
+        {unreadTeams.length === 0 && (
+          <p className="text-gray-500 text-sm">No unread messages</p>
         )}
 
+        {/* SHOW UNREAD TEAMS */}
         <div className="grid gap-4">
-          {teams.map((team) => (
+          {unreadTeams.map((team) => (
             <UserTeamCard
               key={team._id}
               team={team}
@@ -51,4 +62,4 @@ function AdminTeams() {
   );
 }
 
-export default AdminTeams;
+export default Messages;

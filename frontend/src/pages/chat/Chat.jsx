@@ -1,12 +1,12 @@
 import { useEffect, useState, useMemo, useRef } from "react";
 import { useParams, useLocation } from "react-router-dom";
-import Layout from "../components/Layout";
+import Layout from "../../components/common/Layout";
 
 import io from "socket.io-client";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 
-const socket = io("http://localhost:5000");
+const socket = io("import.meta.env.VITE_API_URL");
 
 function Chat() {
   const { id: teamId } = useParams();
@@ -99,7 +99,7 @@ function Chat() {
     });
 
     axios
-      .get(`http://localhost:5000/api/messages/${teamId}`)
+      .get(`${import.meta.env.VITE_API_URL}/api/messages/${teamId}`)
       .then((res) => {
         setMessages(res.data);
 
@@ -139,7 +139,7 @@ function Chat() {
     }
   }, [messages]);
 
-  // ✉️ SEND MESSAGE
+  // SEND MESSAGE
   const sendMessage = () => {
     if (!text.trim()) return;
 

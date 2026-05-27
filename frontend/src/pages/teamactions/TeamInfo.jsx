@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { MessageCircle } from "lucide-react";
-import Layout from "../components/Layout";
+import Layout from "../../components/common/Layout";
 
 function TeamInfo() {
   const { teamId } = useParams();
@@ -16,14 +16,14 @@ function TeamInfo() {
 
       try {
         const teamRes = await fetch(
-          `http://localhost:5000/api/teams/${teamId}`,
+          `${import.meta.env.VITE_API_URL}/api/teams/${teamId}`,
           { headers: { Authorization: `Bearer ${token}` } },
         );
         const teamData = await teamRes.json();
         setTeam(teamData.team);
 
         const memberRes = await fetch(
-          `http://localhost:5000/api/teams/${teamId}/members`,
+          `${import.meta.env.VITE_API_URL}/api/teams/${teamId}/members`,
           { headers: { Authorization: `Bearer ${token}` } },
         );
         const memberData = await memberRes.json();

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import Layout from "../components/Layout";
-import SearchTeamCard from "../components/SearchTeamCard";
-import ReceivedRequestCard from "../components/ReceivedRequestCard";
+import Layout from "../../components/common/Layout";
+import TeamRequestCard from "../../components/teamcards/TeamRequestCard";
+import ReceivedRequestCard from "../../components/requestcards/ReceivedRequestCard";
 import { useParams, useNavigate } from "react-router-dom";
 
 function Requests() {
@@ -25,15 +25,18 @@ function Requests() {
 
       try {
         // SENT
-        const sentRes = await fetch("http://localhost:5000/api/requests/sent", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const sentRes = await fetch(
+          "import.meta.env.VITE_API_URL/api/requests/sent",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
         const sentData = await sentRes.json();
         setSentRequests(sentData.requests || []);
 
         // RECEIVED
         const recRes = await fetch(
-          "http://localhost:5000/api/requests/received",
+          `${import.meta.env.VITE_API_URL}/api/requests/received`,
           {
             headers: { Authorization: `Bearer ${token}` },
           },
@@ -56,7 +59,7 @@ function Requests() {
       const isPending = status === "pending";
 
       const res = await fetch(
-        `http://localhost:5000/api/requests/${team._id}`,
+        `${import.meta.env.VITE_API_URL}/api/requests/${team._id}`,
         {
           method: isPending ? "DELETE" : "POST",
           headers: {
@@ -97,7 +100,7 @@ function Requests() {
 
     try {
       const res = await fetch(
-        `http://localhost:5000/api/requests/${req.team_id._id}/${req._id}/${action}`,
+        `${import.meta.env.VITE_API_URL}/api/requests/${req.team_id._id}/${req._id}/${action}`,
         {
           method: "POST",
           headers: {
@@ -154,7 +157,7 @@ function Requests() {
               console.log(req); // safe now
 
               return (
-                <SearchTeamCard
+                <TeamRequestCard
                   key={req._id}
                   team={req.team}
                   isPending={req.status === "pending"}

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import Layout from "../components/Layout";
+import Layout from "../../components/common/Layout";
 import { useNavigate } from "react-router-dom";
 function Profile() {
   const [user, setUser] = useState(null);
@@ -10,7 +10,7 @@ function Profile() {
       const token = localStorage.getItem("token");
 
       try {
-        const res = await fetch("http://localhost:5000/api/users/me", {
+        const res = await fetch("import.meta.env.VITE_API_URL/api/users/me", {
           headers: {
             Authorization: `Bearer ${token}`,
           },

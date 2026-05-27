@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
-import Layout from "../components/Layout";
-import { useNavigate } from "react-router-dom"; //  ADD THIS
-import UserTeamCard from "../components/UserTeamCard"; //  your card
+import Layout from "../../components/common/Layout";
+import { useNavigate } from "react-router-dom";
+import UserTeamCard from "../../components/teamcards/UserTeamCard";
 
 const UserTeams = () => {
   const [teams, setTeams] = useState([]);
-  const navigate = useNavigate(); // ADD THIS
+  const navigate = useNavigate();
 
   // navigate to chat
   const handleMessage = (team) => {
@@ -17,8 +17,8 @@ const UserTeams = () => {
   useEffect(() => {
     const fetchTeams = async () => {
       const token = localStorage.getItem("token");
-      let url = "http://localhost:5000/api/teams/";
-      
+      let url = `${import.meta.env.VITE_API_URL}/api/teams/`;
+
       try {
         const res = await fetch(url, {
           headers: {

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import Layout from "../components/Layout";
+import Layout from "../../components/common/Layout";
 
 function AddProject() {
   const [type, setType] = useState("");
@@ -37,7 +37,7 @@ function AddProject() {
     const payload = { ...form, type };
 
     try {
-      const res = await fetch("http://localhost:5000/api/teams/", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/teams/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

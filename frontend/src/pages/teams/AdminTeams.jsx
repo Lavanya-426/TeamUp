@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom"; // ✅ ADD THIS
-import UserTeamCard from "../components/UserTeamCard";
-import Layout from "../components/Layout";
+import { useNavigate } from "react-router-dom";
+import UserTeamCard from "../../components/teamcards/UserTeamCard";
+import Layout from "../../components/common/Layout";
 
-function MemberTeams() {
+function AdminTeams() {
   const [teams, setTeams] = useState([]);
-  const navigate = useNavigate(); // ✅ ADD THIS
+  const navigate = useNavigate();
 
-  // ✅ MOVE INSIDE COMPONENT
   const handleMessage = (team) => {
     navigate(`/chat/${team._id}`, {
       state: { teamName: team.teamName },
@@ -18,7 +17,7 @@ function MemberTeams() {
     const fetchTeams = async () => {
       const token = localStorage.getItem("token");
 
-      const res = await fetch("http://localhost:5000/api/teams/member", {
+      const res = await fetch("import.meta.env.VITE_API_URL/api/teams/admin", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -32,10 +31,10 @@ function MemberTeams() {
   return (
     <Layout>
       <div className="p-6 max-w-md mx-auto bg-white rounded-xl shadow">
-        <h1 className="text-xl font-bold mb-4">Member Teams</h1>
+        <h1 className="text-xl font-bold mb-4">Admin Teams</h1>
 
         {teams.length === 0 && (
-          <p className="text-gray-500 text-sm">No teams found</p>
+          <p className="text-gray-500 text-sm">No admin teams</p>
         )}
 
         <div className="grid gap-4">
@@ -52,4 +51,4 @@ function MemberTeams() {
   );
 }
 
-export default MemberTeams;
+export default AdminTeams;

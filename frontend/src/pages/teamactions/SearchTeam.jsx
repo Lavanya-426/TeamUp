@@ -1,6 +1,6 @@
 import { useState } from "react";
-import Layout from "../components/Layout";
-import SearchTeamCard from "../components/SearchTeamCard";
+import Layout from "../../components/common/Layout";
+import TeamRequestCard from "../../components/teamcards/TeamRequestCard";
 
 function SearchTeam() {
   const [type, setType] = useState("");
@@ -36,7 +36,7 @@ function SearchTeam() {
     setTeams([]);
     setFlag(false);
     setMsg("");
-    let url = "http://localhost:5000/api/discover/teams";
+    let url = `${import.meta.env.VITE_API_URL}/api/discover/teams`;
 
     try {
       const res = await fetch(url, {
@@ -156,7 +156,7 @@ function SearchTeam() {
               const isPending = team.canRequest === "pending";
 
               return (
-                <SearchTeamCard
+                <TeamRequestCard
                   key={team._id}
                   team={team}
                   isPending={isPending}
@@ -168,7 +168,7 @@ function SearchTeam() {
 
                       if (!isPending) {
                         res = await fetch(
-                          `http://localhost:5000/api/requests/${team._id}`,
+                          `${import.meta.env.VITE_API_URL}/api/requests/${team._id}`,
                           {
                             method: "POST",
                             headers: { Authorization: `Bearer ${token}` },
@@ -176,7 +176,7 @@ function SearchTeam() {
                         );
                       } else {
                         res = await fetch(
-                          `http://localhost:5000/api/requests/${team._id}`,
+                          `${import.meta.env.VITE_API_URL}/api/requests/${team._id}`,
                           {
                             method: "DELETE",
                             headers: { Authorization: `Bearer ${token}` },
