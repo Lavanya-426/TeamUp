@@ -5,23 +5,23 @@ import {
   Navigate,
 } from "react-router-dom";
 
-import Login from "../pages/Login";
-import Home from "../pages/Home";
-import Verify from "../pages/Verify";
-import Dashboard from "../pages/Dashboard";
-import SelectProject from "../pages/SelectProject";
-import CreateTeam from "../pages/CreateTeam";
-import Register from "../pages/Register";
-import SearchTeam from "../pages/SearchTeam";
-import UserTeams from "../pages/UserTeams";
-import Chat from "../pages/Chat";
-import Profile from "../pages/Profile";
-import ChangePassword from "../pages/ChangePassword";
-import Requests from "../pages/Requests";
-import AdminTeams from "../pages/AdminTeams";
-import MemberTeams from "../pages/MemberTeams";
-import Messages from "../pages/Messages";
-import TeamInfo from "../pages/TeamInfo";
+import Login from "../pages/auth/Login";
+import Home from "../pages/dashboard/Home";
+import Verify from "../pages/auth/Verify";
+import Dashboard from "../pages/dashboard/Dashboard";
+import SelectProject from "../pages/project/SelectProject";
+import CreateTeam from "../pages/teamactions/CreateTeam";
+import Register from "../pages/auth/Register";
+import SearchTeam from "../pages/teamactions/SearchTeam";
+import UserTeams from "../pages/teams/UserTeams";
+import Chat from "../pages/chat/Chat";
+import Profile from "../pages/profile/Profile";
+import ChangePassword from "../pages/auth/ChangePassword";
+import Requests from "../pages/requests/Requests";
+import AdminTeams from "../pages/teams/AdminTeams";
+import MemberTeams from "../pages/teams/MemberTeams";
+import Messages from "../pages/chat/Messages";
+import TeamInfo from "../pages/teamactions/TeamInfo";
 
 import ProtectedRoute from "./PrivateRoute";
 
