@@ -4,7 +4,6 @@ const http = require("http");
 const { Server } = require("socket.io");
 require("dotenv").config();
 
-const cors = require("cors");
 const connectDB = require("./config/db");
 
 // Create Express app
@@ -34,7 +33,7 @@ connectDB();
 
 // Basic route to test server
 app.get("/", (req, res) => {
-  res.send("Hello");
+  res.send("server started");
 });
 
 // API Routes
