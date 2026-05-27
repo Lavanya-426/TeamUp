@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-function SearchTeamCard({ team, isPending, onRequestJoin }) {
+function TeamRequestCard({ team, isPending, onRequestJoin }) {
   const [actionMsg, setActionMsg] = useState("");
 
   const handleClick = async () => {
@@ -70,4 +70,4 @@ function SearchTeamCard({ team, isPending, onRequestJoin }) {
   );
 }
 
-export default SearchTeamCard;
+export default TeamRequestCard;

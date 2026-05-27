@@ -3,7 +3,7 @@ import { Menu, Home, MessageCircle, User } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import io from "socket.io-client";
 
-const socket = io("http://localhost:5000");
+const socket = io("import.meta.env.VITE_API_URLAPI_URL");
 
 function Layout({ children }) {
   const [open, setOpen] = useState(false);
@@ -19,7 +19,7 @@ function Layout({ children }) {
     const fetchUser = async () => {
       const token = localStorage.getItem("token");
 
-      const res = await fetch("http://localhost:5000/api/users/me", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/users/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -35,9 +35,11 @@ function Layout({ children }) {
   useEffect(() => {
     const fetchUnread = async () => {
       try {
+        import.meta.env.VITE_API_URL;
+        import.meta.env.VITE_API_URL;
         const token = localStorage.getItem("token");
 
-        const res = await fetch("http://localhost:5000/api/teams/", {
+        const res = await fetch("import.meta.env.VITE_API_URL/api/teams/", {
           headers: { Authorization: `Bearer ${token}` },
         });
 
