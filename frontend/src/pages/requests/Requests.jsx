@@ -26,7 +26,7 @@ function Requests() {
       try {
         // SENT
         const sentRes = await fetch(
-          "import.meta.env.VITE_API_URL/api/requests/sent",
+          `${import.meta.env.VITE_API_URL}/api/requests/sent`,
           {
             headers: { Authorization: `Bearer ${token}` },
           },

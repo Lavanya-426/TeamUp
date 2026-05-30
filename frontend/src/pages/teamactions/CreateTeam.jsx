@@ -5,14 +5,15 @@ function AddProject() {
   const [type, setType] = useState("");
   const [form, setForm] = useState({});
 
-  //  NEW: message state
+  // MESSAGE STATE
   const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(false);
 
-  //  HANDLE CHANGE (nested support)
+  // HANDLE CHANGE
   const handleChange = (e) => {
     const { name, value } = e.target;
 
+    // NESTED OBJECT SUPPORT
     if (name.includes(".")) {
       const [parent, child] = name.split(".");
 
@@ -31,8 +32,36 @@ function AddProject() {
     }
   };
 
-  //  SUBMIT
+  // SUBMIT
   const handleSubmit = async () => {
+    // COMMON VALIDATION
+    if (
+      !type ||
+      !form.teamName ||
+      !form.urgency ||
+      !form.max_members ||
+      !form.specialization ||
+      !form.deadline
+    ) {
+      setMessage("Please fill all required fields");
+      setIsError(true);
+
+      setTimeout(() => setMessage(""), 3000);
+      return;
+    }
+
+    // COURSE VALIDATION
+    if (
+      type === "COURSE" &&
+      (!form.course?.course_code || !form.course?.teacher || !form.course?.slot)
+    ) {
+      setMessage("Please fill all course details");
+      setIsError(true);
+
+      setTimeout(() => setMessage(""), 3000);
+      return;
+    }
+
     const token = localStorage.getItem("token");
     const payload = { ...form, type };
 
@@ -48,7 +77,7 @@ function AddProject() {
 
       const data = await res.json();
 
-      //  ERROR
+      // ERROR
       if (!res.ok) {
         setMessage(data.message || "Error creating team");
         setIsError(true);
@@ -57,13 +86,13 @@ function AddProject() {
         return;
       }
 
-      //  SUCCESS
+      // SUCCESS
       setMessage("Team created successfully");
       setIsError(false);
 
       setTimeout(() => setMessage(""), 3000);
 
-      // reset form
+      // RESET FORM
       setForm({});
       setType("");
     } catch (err) {
@@ -81,7 +110,7 @@ function AddProject() {
       <div className="p-6 max-w-md mx-auto bg-white rounded-xl shadow">
         <h2 className="text-2xl font-bold mb-4">Create Team</h2>
 
-        {/*  MESSAGE */}
+        {/* MESSAGE */}
         {message && (
           <p
             className={`mb-3 text-sm text-center px-3 py-2 rounded ${
@@ -117,6 +146,7 @@ function AddProject() {
             <input
               name="teamName"
               placeholder="Team Name"
+              value={form.teamName || ""}
               onChange={handleChange}
               className="input"
             />
@@ -131,6 +161,7 @@ function AddProject() {
                     type="radio"
                     name="urgency"
                     value="mild"
+                    checked={form.urgency === "mild"}
                     onChange={handleChange}
                   />
                   Mild
@@ -141,6 +172,7 @@ function AddProject() {
                     type="radio"
                     name="urgency"
                     value="moderate"
+                    checked={form.urgency === "moderate"}
                     onChange={handleChange}
                   />
                   Moderate
@@ -151,6 +183,7 @@ function AddProject() {
                     type="radio"
                     name="urgency"
                     value="urgent"
+                    checked={form.urgency === "urgent"}
                     onChange={handleChange}
                   />
                   Urgent
@@ -161,6 +194,7 @@ function AddProject() {
             <input
               name="max_members"
               placeholder="Maximum members"
+              value={form.max_members || ""}
               onChange={handleChange}
               className="input"
             />
@@ -168,6 +202,7 @@ function AddProject() {
             <input
               name="specialization"
               placeholder="Specialization"
+              value={form.specialization || ""}
               onChange={handleChange}
               className="input"
             />
@@ -175,15 +210,18 @@ function AddProject() {
             <input
               name="description"
               placeholder="Description"
+              value={form.description || ""}
               onChange={handleChange}
               className="input"
             />
 
             {/* DEADLINE */}
             <label className="block mb-2 font-medium">Deadline</label>
+
             <input
               type="date"
               name="deadline"
+              value={form.deadline || ""}
               onChange={handleChange}
               className="input"
             />
@@ -196,6 +234,7 @@ function AddProject() {
             <input
               name="course.course_code"
               placeholder="Course Code"
+              value={form.course?.course_code || ""}
               onChange={handleChange}
               className="input"
             />
@@ -203,6 +242,7 @@ function AddProject() {
             <input
               name="course.teacher"
               placeholder="Faculty"
+              value={form.course?.teacher || ""}
               onChange={handleChange}
               className="input"
             />
@@ -210,6 +250,7 @@ function AddProject() {
             <input
               name="course.slot"
               placeholder="Slot"
+              value={form.course?.slot || ""}
               onChange={handleChange}
               className="input"
             />

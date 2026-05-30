@@ -5,26 +5,31 @@ export default function Register() {
   const navigate = useNavigate();
 
   const [step, setStep] = useState(1);
+
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
+
   const [toast, setToast] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  // STEP 1 → SEND OTP
-  const sendOtp = async () => {
-    // show toast first
-    setToast("OTP sent to your email");
+  const showToast = (message) => {
+    setToast(message);
 
-    // noticeable delay before OTP page
-    setTimeout(() => {
-      setStep(2);
-    }, 2000);
-
-    // hide toast after 3 sec
     setTimeout(() => {
       setToast("");
     }, 3000);
+  };
 
+  // STEP 1 → SEND OTP
+  const sendOtp = async () => {
     try {
+      if (!email) {
+        showToast("Please enter email");
+        return;
+      }
+
+      setLoading(true);
+
       const res = await fetch(
         `${import.meta.env.VITE_API_URL}/api/auth/send-otp`,
         {
@@ -36,66 +41,85 @@ export default function Register() {
         },
       );
 
+      let data;
+
+      try {
+        data = await res.json();
+      } catch {
+        throw new Error("Invalid server response");
+      }
+
       if (!res.ok) {
-        setToast(
-          res.status == 400 ? "User already registered" : "Failed to send OTP",
-        );
-
-        // stay on same page
-        setStep(1);
-
-        setTimeout(() => {
-          setToast("");
-        }, 3000);
-
+        showToast(data.message || "Failed to send OTP");
         return;
       }
-    } catch (err) {
-      setToast("Server error");
 
-      setStep(1);
+      showToast("OTP sent to your email");
 
       setTimeout(() => {
-        setToast("");
-      }, 3000);
+        setStep(2);
+      }, 1000);
+    } catch (err) {
+      console.error(err);
+
+      showToast("Server error");
+    } finally {
+      setLoading(false);
     }
   };
 
   // STEP 2 → VERIFY OTP
   const verifyOtp = async () => {
-    const res = await fetch(
-      `${import.meta.env.VITE_API_URL}/api/auth/verify-otp`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+    try {
+      if (!otp) {
+        showToast("Please enter OTP");
+        return;
+      }
+
+      setLoading(true);
+
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/auth/verify-otp`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email, otp }),
         },
-        body: JSON.stringify({ email, otp }),
-      },
-    );
+      );
 
-    const data = await res.json();
+      let data;
 
-    if (!res.ok) {
-      setToast(data.message || "Failed to verify OTP");
+      try {
+        data = await res.json();
+      } catch {
+        throw new Error("Invalid server response");
+      }
 
-      setTimeout(() => {
-        setToast("");
-      }, 3000);
+      if (!res.ok) {
+        showToast(data.message || "Failed to verify OTP");
+        return;
+      }
 
-      return;
-    }
+      if (!data.tempToken) {
+        showToast("Invalid OTP");
+        return;
+      }
 
-    if (data.tempToken) {
       localStorage.setItem("tempToken", data.tempToken);
 
-      navigate("/register");
-    } else {
-      setToast("Invalid OTP");
+      showToast("OTP verified");
 
       setTimeout(() => {
-        setToast("");
-      }, 3000);
+        navigate("/register");
+      }, 1000);
+    } catch (err) {
+      console.error(err);
+
+      showToast("Server error");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -112,17 +136,26 @@ export default function Register() {
         <h2 className="text-2xl font-bold mb-6 text-center">
           {step === 1 ? "Enter your email" : "Drop the OTP"}
         </h2>
+
         {/* STEP 1 */}
         {step === 1 && (
           <>
             <input
+              type="email"
               placeholder="Enter email"
+              value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="input"
             />
 
-            <button onClick={sendOtp} className="btn">
-              Send OTP
+            <button
+              onClick={sendOtp}
+              disabled={loading}
+              className={`btn w-full ${
+                loading ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+            >
+              {loading ? "Sending..." : "Send OTP"}
             </button>
           </>
         )}
@@ -132,12 +165,19 @@ export default function Register() {
           <>
             <input
               placeholder="Enter OTP"
+              value={otp}
               onChange={(e) => setOtp(e.target.value)}
               className="input"
             />
 
-            <button onClick={verifyOtp} className="btn">
-              Verify OTP
+            <button
+              onClick={verifyOtp}
+              disabled={loading}
+              className={`btn w-full ${
+                loading ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+            >
+              {loading ? "Verifying..." : "Verify OTP"}
             </button>
           </>
         )}

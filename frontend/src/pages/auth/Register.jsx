@@ -6,14 +6,17 @@ export default function Profile() {
 
   const [form, setForm] = useState({
     name: "",
-    mobile: "",
     password: "",
+    email: "",
     degree: "",
     school: "",
     branch: "",
     specialization: "",
     year: "",
   });
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleChange = (e) => {
     setForm({
@@ -22,33 +25,86 @@ export default function Profile() {
     });
   };
 
+  const validateForm = () => {
+    if (
+      !form.name ||
+      !form.password ||
+      !form.email ||
+      !form.specialization ||
+      !form.degree ||
+      !form.school ||
+      !form.branch ||
+      !form.year
+    ) {
+      return "Please fill all required fields";
+    }
+
+    // if (form.password.length < 6) {
+    //   return "Password must be at least 6 characters";
+    //}
+
+    return null;
+  };
+
   const handleSubmit = async () => {
-    const tempToken = localStorage.getItem("tempToken");
+    try {
+      setError("");
 
-    console.log("TEMP TOKEN:", tempToken); // debug
+      const validationError = validateForm();
 
-    const res = await fetch(
-      `${import.meta.env.VITE_API_URL}/api/auth/register`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${tempToken}`, // VERY IMPORTANT
+      if (validationError) {
+        setError(validationError);
+        return;
+      }
+
+      const tempToken = localStorage.getItem("tempToken");
+
+      if (!tempToken) {
+        setError("Session expired. Please verify OTP again.");
+        return;
+      }
+
+      setLoading(true);
+
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/auth/register`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${tempToken}`,
+          },
+          body: JSON.stringify(form),
         },
-        body: JSON.stringify(form),
-      },
-    );
+      );
 
-    const data = await res.json();
-    console.log("REGISTER RESPONSE:", data);
+      let data;
 
-    if (data.token) {
-      localStorage.setItem("token", data.token);
-      localStorage.removeItem("tempToken");
-      console.log(data.token);
-      navigate("/dashboard");
-    } else {
-      alert(data.message || "Registration failed");
+      try {
+        data = await res.json();
+      } catch {
+        throw new Error("Invalid server response");
+      }
+
+      if (!res.ok) {
+        setError(data.message || "Registration failed");
+        return;
+      }
+
+      if (data.token) {
+        localStorage.setItem("token", data.token);
+        localStorage.removeItem("tempToken");
+
+        navigate("/dashboard");
+      } else {
+        setError("Token missing from server response");
+      }
+    } catch (err) {
+      console.error("REGISTER ERROR:", err);
+
+      setError(err.message || "Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -59,58 +115,87 @@ export default function Profile() {
           Complete Profile
         </h2>
 
-        <input
-          name="name"
-          placeholder="Name"
-          onChange={handleChange}
-          className="input"
-        />
-        <input
-          name="mobile"
-          placeholder="Mobile"
-          onChange={handleChange}
-          className="input"
-        />
-        <input
-          name="password"
-          type="password"
-          placeholder="Password"
-          onChange={handleChange}
-          className="input"
-        />
-        <input
-          name="degree"
-          placeholder="Degree"
-          onChange={handleChange}
-          className="input"
-        />
-        <input
-          name="school"
-          placeholder="School"
-          onChange={handleChange}
-          className="input"
-        />
-        <input
-          name="branch"
-          placeholder="Branch"
-          onChange={handleChange}
-          className="input"
-        />
-        <input
-          name="specialization"
-          placeholder="Specialization"
-          onChange={handleChange}
-          className="input"
-        />
-        <input
-          name="year"
-          placeholder="Year"
-          onChange={handleChange}
-          className="input"
-        />
+        {error && (
+          <div className="bg-red-100 text-red-600 p-3 rounded mb-4 text-sm">
+            {error}
+          </div>
+        )}
+        <form autoComplete="off">
+          <input
+            name="name"
+            placeholder="Name"
+            onChange={handleChange}
+            value={form.name}
+            className="input"
+          />
 
-        <button onClick={handleSubmit} className="btn">
-          Register
+          <input
+            name="email"
+            placeholder="Email"
+            onChange={handleChange}
+            autoComplete="new-email"
+            value={form.email}
+            className="input"
+          />
+
+          <input
+            name="password"
+            type="password"
+            placeholder="Password"
+            onChange={handleChange}
+            autoComplete="new-password"
+            value={form.password}
+            className="input"
+          />
+
+          <input
+            name="degree"
+            placeholder="Degree"
+            onChange={handleChange}
+            value={form.degree}
+            className="input"
+          />
+
+          <input
+            name="school"
+            placeholder="School"
+            onChange={handleChange}
+            value={form.school}
+            className="input"
+          />
+
+          <input
+            name="branch"
+            placeholder="Branch"
+            onChange={handleChange}
+            value={form.branch}
+            className="input"
+          />
+
+          <input
+            name="specialization"
+            placeholder="Specialization"
+            onChange={handleChange}
+            value={form.specialization}
+            className="input"
+          />
+
+          <input
+            name="year"
+            placeholder="Year"
+            onChange={handleChange}
+            value={form.year}
+            className="input"
+          />
+        </form>
+        <button
+          onClick={handleSubmit}
+          disabled={loading}
+          className={`btn w-full ${
+            loading ? "opacity-50 cursor-not-allowed" : ""
+          }`}
+        >
+          {loading ? "Registering..." : "Register"}
         </button>
       </div>
     </div>

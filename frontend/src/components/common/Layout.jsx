@@ -42,8 +42,6 @@ function Layout({ children }) {
         });
 
         if (!res.ok) return;
-        console.log(res);
-        console.log(res.url);
         const data = await res.json();
 
         //  COUNT TEAMS WITH UNREAD MESSAGES

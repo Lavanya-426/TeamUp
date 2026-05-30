@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../../components/common/Layout";
 import UserTeamCard from "../../components/teamcards/UserTeamCard";
-
 function Messages() {
   const [teams, setTeams] = useState([]);
   const [unreadTeams, setUnreadTeams] = useState([]);
