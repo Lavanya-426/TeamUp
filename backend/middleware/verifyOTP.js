@@ -1,4 +1,4 @@
-const { verifyOTP } = require("../utils/otpHelper");
+const { verifyOTP } = require("../utils/OTPHelper");
 
 module.exports = async (req, res, next) => {
   try {

@@ -11,6 +11,10 @@ exports.sendRequest = async (req, res) => {
 
     const scope = targetTeam.scope;
 
+    if (!targetTeam) {
+      return res.status(404).json({ message: "Team not found" });
+    }
+
     //  Run independent queries in parallel
     const [membership, pendingReq, existingRequest] = await Promise.all([
       // membership check (same team OR same scope)

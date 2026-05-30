@@ -33,7 +33,7 @@ exports.viewReceivedRequests = async (req, res) => {
 };
 exports.viewSentRequests = async (req, res) => {
   try {
-    const userId = new mongoose.Types.ObjectId(req.userInfo.id);
+    const userId = req.userInfo.id;
     console.log("in sending req");
 
     const requests = await joinRequest.aggregate([

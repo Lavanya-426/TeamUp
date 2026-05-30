@@ -3,7 +3,10 @@ const Team = require("../../models/Team.js");
 const Message = require("../../models/Message");
 
 const buildTeamsResponse = async (memberships) => {
-  const teamIds = memberships.map((m) => m.team_id._id);
+  // ENSURE populate always works by filtering nulls
+  const populatedMemberships = memberships.filter((m) => m.team_id !== null);
+
+  const teamIds = populatedMemberships.map((m) => m.team_id._id);
 
   const latestMessages = await Message.aggregate([
     {
@@ -25,7 +28,7 @@ const buildTeamsResponse = async (memberships) => {
     latestMap[m._id.toString()] = m.latestMessageTime;
   });
 
-  return memberships.map((m) => {
+  return populatedMemberships.map((m) => {
     const team = m.team_id;
 
     const latestTime = latestMap[team._id.toString()];

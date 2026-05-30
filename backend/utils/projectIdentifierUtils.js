@@ -3,7 +3,8 @@ const isSameProject = (teamA, teamB) => {
 
   if (teamA.type === "COURSE") {
     return (
-      teamA.course_id.toString() === teamB.course_id.toString() &&
+      teamA.course.course_code.toString() ===
+        teamB.course.course_code.toString() &&
       teamA.slot === teamB.slot &&
       teamA.teacher === teamB.teacher
     );

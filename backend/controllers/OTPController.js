@@ -3,7 +3,7 @@ const User = require("../models/User");
 const bcrypt = require("bcrypt");
 const transporter = require("../config/mailer");
 const { generateOTP } = require("../utils/otpGenerator");
-const { verifyOTP } = require("../utils/otpHelper");
+const { verifyOTP } = require("../utils/OTPHelper");
 const jwt = require("jsonwebtoken");
 
 exports.sendOtp = async (req, res) => {

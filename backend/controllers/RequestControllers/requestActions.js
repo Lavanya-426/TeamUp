@@ -33,15 +33,28 @@ exports.approveRequest = async (req, res) => {
     const scope = team.scope;
 
     // 1. Reserve slot (atomic)
-    const updated = await Team.updateOne(
-      {
-        _id: teamId,
-        current_members: { $lt: team.max_members },
-      },
-      { $inc: { current_members: 1 } },
+    const updatedTeam = await Team.findByIdAndUpdate(
+      teamId,
+      [
+        {
+          $set: {
+            current_members: {
+              $cond: [
+                { $lt: ["$current_members", "$max_members"] },
+                { $add: ["$current_members", 1] },
+                "$current_members",
+              ],
+            },
+          },
+        },
+      ],
+      { new: true },
     );
 
-    if (updated.modifiedCount === 0) {
+    if (updatedTeam.current_members === team.current_members) {
+      return res.status(400).json({ message: "Team is full" });
+    }
+    if (updatedTeam.modifiedCount === 0) {
       return res.status(400).json({ message: "Team is full" });
     }
 

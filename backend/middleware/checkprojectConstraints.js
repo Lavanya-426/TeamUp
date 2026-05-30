@@ -34,7 +34,7 @@ const checkProjectConstraint = (mode = "send") => {
           return res.status(404).json({ message: "Request not found" });
         }
 
-        userId = request.id;
+        userId = request._id;
 
         targetTeam = await Team.findById(request.team_id);
 
@@ -44,12 +44,13 @@ const checkProjectConstraint = (mode = "send") => {
       // check memberships
       const memberships = await TeamMembership.find({
         user_id: userId,
+        scope: targetTeam.scope,
       }).populate("team_id");
 
       for (let m of memberships) {
-        if (m.team_id === targetTeam._id) {
+        if (m.team_id.toString() === targetTeam._id.toString()) {
           return res.status(400).json({
-            message: "Already part of a team for this project",
+            message: "Already part of a team for this project/scope",
           });
         }
       }

@@ -23,9 +23,9 @@ const {
 } = require("../controllers/TeamManagementControllers/getTeamsController.js");
 
 router.post("/", verifyJWT, buildScope, createTeam);
-router.get("/", verifyJWT, getAllTeams);
 router.get("/admin", verifyJWT, getAdminTeams);
 router.get("/member", verifyJWT, getMemberTeams);
+router.get("/", verifyJWT, getAllTeams);
 
 router.get("/:id", getTeamDetails);
 router.get("/:id/members", getTeamMembers);

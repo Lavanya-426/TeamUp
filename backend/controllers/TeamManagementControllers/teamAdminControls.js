@@ -59,10 +59,20 @@ exports.deleteTeam = async (req, res) => {
   try {
     const { id } = req.params;
 
-    await Team.findByIdAndDelete(id);
+    // Check if team exists and was deleted
+    const deletedTeam = await Team.findByIdAndDelete(id);
+
+    if (!deletedTeam) {
+      return res.status(404).json({ message: "Team not found" });
+    }
+
+    // Clean up associated memberships
     await TeamMembership.deleteMany({ team_id: id });
 
-    res.json({ message: "Team deleted" });
+    res.json({
+      message: "Team deleted successfully",
+      teamId: id,
+    });
   } catch (err) {
     console.log(err);
     res.status(500).json({ message: "Server error" });
