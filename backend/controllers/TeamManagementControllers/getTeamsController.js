@@ -47,6 +47,7 @@ const buildTeamsResponse = async (memberships) => {
 exports.getAdminTeams = async (req, res) => {
   try {
     const userId = req.userInfo.id;
+    console.log("in get admin teams function");
 
     const memberships = await TeamMembership.find({
       user_id: userId,
@@ -65,6 +66,7 @@ exports.getAdminTeams = async (req, res) => {
 exports.getMemberTeams = async (req, res) => {
   try {
     const userId = req.userInfo.id;
+    console.log("in get member teams function");
 
     const memberships = await TeamMembership.find({
       user_id: userId,
@@ -105,7 +107,7 @@ exports.getMemberTeams = async (req, res) => {
 exports.getAllTeams = async (req, res) => {
   try {
     const userId = req.userInfo.id;
-
+    console.log("in get all teams function");
     // get memberships + teams
     const memberships = await TeamMembership.find({
       user_id: userId,
@@ -142,17 +144,15 @@ exports.getAllTeams = async (req, res) => {
 
       const latestTime = latestMap[team._id.toString()];
       const lastSeen = m.lastSeenAt;
-
+      console.log("latestTime:", latestTime, "lastSeen:", lastSeen);
       const hasNewMessages = latestTime && (!lastSeen || latestTime > lastSeen);
-
+      console.log("hasNewMessages:", hasNewMessages);
       return {
         ...team._doc,
         role: m.role,
         hasNewMessages: !!hasNewMessages,
       };
     });
-
-    console.log("TEAMS:", teams);
     res.json({ teams });
   } catch (err) {
     console.log(err);

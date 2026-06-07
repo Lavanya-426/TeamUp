@@ -4,7 +4,14 @@ const Team = require("../../models/Team.js");
 exports.getTeamDetails = async (req, res) => {
   try {
     const { id } = req.params;
-
+    const userId = req.userInfo.id;
+    const membership = await TeamMembership.findOne({
+      user_id: userId,
+      team_id: id,
+    });
+    if (!membership) {
+      return res.status(403).json({ message: "not a member of this team" });
+    } 
     const team = await Team.findById(id).populate("created_by", "name email");
 
     if (!team) {
@@ -22,6 +29,14 @@ exports.getTeamDetails = async (req, res) => {
 exports.getTeamMembers = async (req, res) => {
   try {
     const { id } = req.params;
+    const userId = req.userInfo.id;
+    const membership = await TeamMembership.findOne({
+      user_id: userId,
+      team_id: id,
+    });
+    if (!membership) {
+      return res.status(403).json({ message: "not a member of this team" });
+    }
 
     const members = await TeamMembership.find({
       team_id: id,

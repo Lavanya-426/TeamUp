@@ -34,10 +34,47 @@ exports.viewReceivedRequests = async (req, res) => {
 exports.viewSentRequests = async (req, res) => {
   try {
     const userId = req.userInfo.id;
-    console.log("in sending req");
-
+    console.log("in sent req");
+    // const requests = await joinRequest.aggregate([
+    //   {
+    //     $match: {
+    //       user_id: new mongoose.Types.ObjectId(userId),
+    //     },
+    //   },
+    //   {
+    //     $lookup: {
+    //       from: "teams",
+    //       localField: "team_id",
+    //       foreignField: "_id",
+    //       as: "team",
+    //     },
+    //   },
+    //   {
+    //     $unwind: "$team",
+    //   },
+    //   {
+    //     $facet: {
+    //       pending: [
+    //         { $match: { status: "pending" } },
+    //         { $sort: { createdAt: -1 } },
+    //       ],
+    //       accepted: [
+    //         { $match: { status: "accepted" } },
+    //         { $sort: { respondedAt: -1 } },
+    //       ],
+    //       rejected: [
+    //         { $match: { status: "rejected" } },
+    //         { $sort: { respondedAt: -1 } },
+    //       ],
+    //       withdrawn: [
+    //         { $match: { status: "withdrawn" } },
+    //         { $sort: { updatedAt: -1 } },
+    //       ],
+    //     },
+    //   },
+    // ]);
     const requests = await joinRequest.aggregate([
-      { $match: { user_id: userId } },
+      { $match: { user_id: new mongoose.Types.ObjectId(userId) } },
 
       // JOIN TEAM DATA
       {
@@ -70,7 +107,7 @@ exports.viewSentRequests = async (req, res) => {
 
       { $sort: { statusPriority: 1, requestedAt: -1 } },
     ]);
-
+    console.log(requests);
     return res.json({ requests });
   } catch (err) {
     console.log(err);

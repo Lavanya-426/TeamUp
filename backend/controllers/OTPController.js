@@ -56,9 +56,10 @@ Your OTP to register on TeamUp is: ${otp}
 
 This OTP is valid for 5 minutes.
 
-If you didn’t request this, you can safely ignore this email.
+If you didn't request this, you can safely ignore this email.
 
-— TeamUp`,
+Regards,
+TeamUp`,
     });
     console.log("mail sent");
     if (process.env.NODE_ENV === "development") {

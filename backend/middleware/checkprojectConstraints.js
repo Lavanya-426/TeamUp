@@ -34,7 +34,7 @@ const checkProjectConstraint = (mode = "send") => {
           return res.status(404).json({ message: "Request not found" });
         }
 
-        userId = request._id;
+        userId = request.user_id;
 
         targetTeam = await Team.findById(request.team_id);
 

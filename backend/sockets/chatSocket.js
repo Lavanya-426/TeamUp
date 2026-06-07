@@ -6,43 +6,76 @@ module.exports = (io, socket) => {
   // join team room
 
   // send message
-  socket.on("send_message", async (data) => {
+
+  socket.on("send_message", async ({ teamId, text, clientMsgId }, ack) => {
     try {
-      const { teamId, token, text } = data;
+      const senderId = socket.user.id;
 
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const senderId = decoded.id;
-
-      // FETCH USER NAME
-      const user = await User.findById(senderId).select("name");
-      console.log("User found:", user);
-      if (!user) {
-        console.log("User not found");
-        return;
+      if (!teamId || !text) {
+        return ack?.({
+          ok: false,
+          code: "BAD_REQUEST",
+          message: "teamId and text are required",
+          clientMsgId,
+        });
       }
 
-      // SAVE MESSAGE WITH NAME
+      // Authorization: user must be a member of this team
+      const membership = await TeamMembership.findOne({
+        user_id: senderId,
+        team_id: teamId,
+      });
+
+      if (!membership) {
+        return ack?.({
+          ok: false,
+          code: "FORBIDDEN",
+          message: "Not a member of this team",
+          clientMsgId,
+        });
+      }
+
+      const user = await User.findById(senderId).select("name");
+      if (!user) {
+        return ack?.({
+          ok: false,
+          code: "USER_NOT_FOUND",
+          message: "User not found",
+          clientMsgId,
+        });
+      }
+
       const message = await messageService.createMessage({
         teamId,
         senderId,
         senderName: user.name,
-        text,
+        text: text,
       });
+      console.log("MESSAGE CREATED:", message.createdAt, "TEAM:", teamId);
 
       io.to(`team_${teamId}`).emit("receive_message", message);
-      console.log(`Message sent to team_${teamId}:`, message);
+
+      return ack?.({
+        ok: true,
+        messageId: message._id,
+        clientMsgId,
+        serverTimestamp: message.createdAt,
+      });
     } catch (err) {
       console.error("Error sending message:", err);
+      return ack?.({
+        ok: false,
+        code: "SEND_FAILED",
+        message: "Failed to send message",
+      });
     }
   });
 
-  socket.on("join_team", async ({ teamId, token }) => {
+  socket.on("join_team", async ({ teamId }) => {
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const userId = decoded.id;
-
+      const userId = socket.user.id;
       socket.join(`team_${teamId}`);
-
+      console.log("JOIN TEAM EMITTED");
       // mark as seen when joining
       await TeamMembership.findOneAndUpdate(
         { user_id: userId, team_id: teamId },
@@ -55,11 +88,14 @@ module.exports = (io, socket) => {
     }
   });
 
+  socket.on("leave_team", ({ teamId }) => {
+    socket.leave(`team_${teamId}`);
+    console.log(`User ${socket.id} left team ${teamId}`);
+  });
   // mark seen explicitly
-  socket.on("mark_seen", async ({ teamId, token }) => {
+  socket.on("mark_seen", async ({ teamId }) => {
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const userId = decoded.id;
+      const userId = socket.user.id;
 
       await TeamMembership.findOneAndUpdate(
         { user_id: userId, team_id: teamId },

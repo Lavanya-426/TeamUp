@@ -4,123 +4,76 @@ const TeamJoinRequest = require("../../models/Request.js");
 const Team = require("../../models/Team");
 
 exports.approveRequest = async (req, res) => {
+  const session = await mongoose.startSession();
+
   try {
     const { teamId } = req.params;
-
-    const request = await TeamJoinRequest.findById(req.requestDoc._id);
-
-    if (!request) {
-      return res.status(400).json({ message: "Invalid action" });
-    }
-
-    if (request.team_id.toString() !== teamId) {
-      return res.status(400).json({ message: "Team mismatch" });
-    }
-
-    if (request.status === "accepted") {
-      return res.json({ message: "Already approved" });
-    }
-
-    if (request.status !== "pending") {
-      return res.status(400).json({ message: "Invalid action" });
-    }
-
-    const team = await Team.findById(teamId);
-    if (!team) {
-      return res.status(404).json({ message: "Team not found" });
-    }
-
-    const scope = team.scope;
-
-    // 1. Reserve slot (atomic)
-    const updatedTeam = await Team.findByIdAndUpdate(
-      teamId,
-      [
-        {
-          $set: {
-            current_members: {
-              $cond: [
-                { $lt: ["$current_members", "$max_members"] },
-                { $add: ["$current_members", 1] },
-                "$current_members",
-              ],
-            },
-          },
-        },
-      ],
-      { new: true },
-    );
-
-    if (updatedTeam.current_members === team.current_members) {
-      return res.status(400).json({ message: "Team is full" });
-    }
-    if (updatedTeam.modifiedCount === 0) {
-      return res.status(400).json({ message: "Team is full" });
-    }
-
-    // 2. Create membership
-    try {
-      await TeamMembership.create({
-        user_id: request.user_id,
-        team_id: teamId,
-        scope,
-        role: "member",
-      });
-    } catch (err) {
-      // rollback slot manually
-      await Team.updateOne({ _id: teamId }, { $inc: { current_members: -1 } });
-
-      if (err.code === 11000) {
-        return res.status(400).json({
-          message: "User already joined a team in this class",
-        });
+    let resultPayload = null;
+    console.log("Approving request", req.requestDoc._id, "for team", teamId);
+    await session.withTransaction(async () => {
+      console.log("transaction started");
+      const request = await TeamJoinRequest.findById(
+        req.requestDoc._id,
+      ).session(session);
+      if (!request) throw new Error("Invalid action");
+      if (request.team_id.toString() !== teamId)
+        throw new Error("Team mismatch");
+      if (request.status === "accepted") {
+        resultPayload = { message: "Already approved" };
+        return;
       }
+      if (request.status !== "pending") throw new Error("Invalid action");
 
-      throw err;
-    }
+      const reserveRes = await Team.updateOne(
+        { _id: teamId, $expr: { $lt: ["$current_members", "$max_members"] } },
+        { $inc: { current_members: 1 } },
+        { session },
+      );
+      console.log("Reserve result:", reserveRes);
+      if (reserveRes.modifiedCount === 0) throw new Error("Team is full");
 
-    // 3. Mark accepted
-    request.status = "accepted";
-    request.respondedAt = new Date();
-    await request.save();
+      const team = await Team.findById(teamId).session(session);
+      const scope = team.scope;
 
-    // 4. Reject same-scope requests
-    await TeamJoinRequest.updateMany(
-      {
-        user_id: request.user_id,
-        scope,
-        status: "pending",
-        _id: { $ne: request._id },
-      },
-      {
-        status: "rejected",
-        respondedAt: new Date(),
-      },
-    );
-
-    // 5. If team becomes full
-    const updatedTeam = await Team.findById(teamId);
-
-    if (updatedTeam.current_members >= updatedTeam.max_members) {
-      await Team.updateOne({ _id: teamId }, { status: "FULL" });
+      await TeamMembership.create(
+        [{ user_id: request.user_id, team_id: teamId, scope, role: "member" }],
+        { session },
+      );
+      console.log("Membership created");
+      request.status = "accepted";
+      request.respondedAt = new Date();
+      await request.save({ session });
 
       await TeamJoinRequest.updateMany(
         {
-          team_id: teamId,
+          user_id: request.user_id,
+          scope,
           status: "pending",
           _id: { $ne: request._id },
         },
-        {
-          status: "rejected",
-          respondedAt: new Date(),
-        },
+        { status: "rejected", respondedAt: new Date() },
+        { session },
       );
-    }
+      console.log("Other pending requests rejected");
+      const latestTeam = await Team.findById(teamId).session(session);
+      if (latestTeam.current_members >= latestTeam.max_members) {
+        await Team.updateOne({ _id: teamId }, { status: "FULL" }, { session });
+        await TeamJoinRequest.updateMany(
+          { team_id: teamId, status: "pending", _id: { $ne: request._id } },
+          { status: "rejected", respondedAt: new Date() },
+          { session },
+        );
+      }
+      console.log("Finalized request approval");
+      resultPayload = { message: "Approved" };
+    });
 
-    res.json({ message: "Approved" });
+    return res.json(resultPayload || { message: "Approved" });
   } catch (err) {
     console.log(err);
-    res.status(400).json({ message: err.message || "Server error" });
+    return res.status(400).json({ message: err.message });
+  } finally {
+    await session.endSession();
   }
 };
 

@@ -24,6 +24,8 @@ app.use(
       }
     },
     credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   }),
 );
 app.use(express.json());
@@ -35,6 +37,12 @@ connectDB();
 app.get("/", (req, res) => {
   res.send("server started");
 });
+
+const apiLimiter = require("./middleware/rateLimiter");
+const authLimiter = require("./middleware/rateLimiter");
+app.use("/api/auth", authLimiter);
+
+app.use("/api", apiLimiter);
 
 // API Routes
 app.use("/api/auth", require("./routes/authRoutes"));
@@ -58,6 +66,19 @@ const io = new Server(server, {
 // Import and initialize socket logic
 const socket = require("./sockets/index");
 socket(io);
+const jwt = require("jsonwebtoken");
+
+io.use((socket, next) => {
+  try {
+    const token = socket.handshake.auth?.token;
+    if (!token) return next(new Error("No token"));
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    socket.user = { id: decoded.id, email: decoded.email };
+    next();
+  } catch {
+    next(new Error("Invalid token"));
+  }
+});
 
 const PORT = process.env.PORT;
 // Start server

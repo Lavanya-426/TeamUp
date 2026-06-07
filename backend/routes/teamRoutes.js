@@ -27,8 +27,8 @@ router.get("/admin", verifyJWT, getAdminTeams);
 router.get("/member", verifyJWT, getMemberTeams);
 router.get("/", verifyJWT, getAllTeams);
 
-router.get("/:id", getTeamDetails);
-router.get("/:id/members", getTeamMembers);
+router.get("/:id", verifyJWT, getTeamDetails);
+router.get("/:id/members", verifyJWT, getTeamMembers);
 
 router.patch("/:id", verifyJWT, requireAdmin("id"), updateTeam);
 router.delete("/:id", verifyJWT, requireAdmin("id"), deleteTeam);
