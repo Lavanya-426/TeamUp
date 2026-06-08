@@ -2,11 +2,11 @@ import { useEffect, useState, useMemo, useRef } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import Layout from "../../components/common/Layout";
 
+import io from "socket.io-client";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
-import socket from "../../services/socket";
-import api from "../../services/api";
 
+const socket = io("import.meta.env.VITE_API_URL");
 
 function Chat() {
   const { id: teamId } = useParams();
@@ -48,23 +48,6 @@ function Chat() {
     }, 400);
   };
 
-  const mergeMessagesById = (existing, incoming) => {
-    const map = new Map();
-  
-    for (const m of existing) {
-      const key = m._id || `${m.senderId}:${m.createdAt}:${m.text}`;
-      map.set(key, m);
-    }
-  
-    for (const m of incoming) {
-      const key = m._id || `${m.senderId}:${m.createdAt}:${m.text}`;
-      map.set(key, m);
-    }
-  
-    return Array.from(map.values()).sort(
-      (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
-    );
-  };
   const handleScroll = () => {
     if (isNearBottom()) {
       setHasNewMessage(false);
@@ -131,14 +114,8 @@ function Chat() {
       })
       .catch((err) => console.error(err));
 
-    // history load
-const res = await api.get(`/api/messages/${teamId}`);
-setMessages((prev) => mergeMessagesById(prev, res.data));
-
-// realtime
-socket.on("receive_message", (msg) => {
-  setMessages((prev) => mergeMessagesById(prev, [msg]));
-});
+    socket.on("receive_message", (msg) => {
+      setMessages((prev) => [...prev, msg]);
 
       if (!isNearBottom()) {
         setHasNewMessage(true);
@@ -147,32 +124,7 @@ socket.on("receive_message", (msg) => {
         emitSeen();
       }
     });
-    const prevTeamRef = useRef(null);
 
-useEffect(() => {
-  if (!teamId) return;
-
-  if (prevTeamRef.current && prevTeamRef.current !== teamId) {
-    socket.emit("leave_team", { teamId: prevTeamRef.current });
-  }
-
-  socket.emit("join_team", { teamId }); // token removed once handshake auth is added
-  prevTeamRef.current = teamId;
-
-  return () => {
-    socket.emit("leave_team", { teamId });
-  };
-}, [teamId]);
-useEffect(() => {
-  const onConnect = () => {
-    if (teamId) socket.emit("join_team", { teamId });
-  };
-
-  socket.on("connect", onConnect);
-  return () => socket.off("connect", onConnect);
-}, [teamId]);
-
-    
     return () => {
       socket.off("receive_message");
     };
@@ -189,27 +141,24 @@ useEffect(() => {
 
   // SEND MESSAGE
   const sendMessage = () => {
-    const clean = text.trim();
-    if (!clean || !teamId) return;
-  
-    const clientMsgId = crypto.randomUUID();
-  
-    socket.timeout(5000).emit(
-      "send_message",
-      { teamId, text: clean, clientMsgId },
-      (err, ack) => {
-        if (err || !ack?.ok) {
-          console.error("send_message failed", err || ack);
-          // optional: show toast/retry UI
-          return;
-        }
-        // success acknowledged by server
-        // no manual append here; receive_message event will update UI
-      },
-    );
-  
+    if (!text.trim()) return;
+
+    const token = localStorage.getItem("token");
+
+    socket.emit("send_message", {
+      teamId,
+      text,
+      token,
+    });
+
     setText("");
+
+    // immediately mark seen for own message
     emitSeen();
+
+    if (!isNearBottom()) {
+      setHasNewMessage(true);
+    }
   };
 
   const formatTime = (date) => {
