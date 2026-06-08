@@ -1,4 +1,4 @@
-const OTP = require("../models/OTP");
+const OTP = require("../models/Otp.js");
 const bcrypt = require("bcrypt");
 
 exports.verifyOTP = async (email, otp) => {
