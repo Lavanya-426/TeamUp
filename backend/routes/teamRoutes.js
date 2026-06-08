@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const checkProjectConstraint = require("../middleware/checkProjectConstraints");
+const checkProjectConstraint = require("../middleware/checkprojectConstraints");
 
 const verifyJWT = require("../middleware/jwtVerifyingMiddleware.js");
 const requireAdmin = require("../middleware/roleMiddleware.js");
