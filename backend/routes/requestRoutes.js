@@ -1,9 +1,9 @@
 const express = require("express");
 const router = express.Router();
 
-const verifyJWT = require("../middleware/jwtVerifyingMiddleware.js");
-const requireAdmin = require("../middleware/roleMiddleware.js");
-const checkProjectConstraint = require("../middleware/checkProjectConstraints.js");
+const verifyJWT = require("../middleware/jwtVerifyingMiddleware");
+const requireAdmin = require("../middleware/roleMiddleware");
+const checkProjectConstraint = require("../middleware/checkProjectConstraints");
 
 // controllers
 const {
