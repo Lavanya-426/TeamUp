@@ -1,12 +1,27 @@
-import { useEffect, useState, useMemo, useRef } from "react";
-import { useParams, useLocation } from "react-router-dom";
-import Layout from "../../components/common/Layout";
-
-import io from "socket.io-client";
-import axios from "axios";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useLocation, useParams } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
+import Layout from "../../components/common/Layout";
+import socket, { connectSocket } from "../../services/socket";
+import api from "../../services/api";
 
-const socket = io(import.meta.env.VITE_API_URL);
+const mergeMessagesById = (existing, incoming) => {
+  const map = new Map();
+
+  for (const m of existing) {
+    const key = m._id || `${m.senderId}:${m.createdAt}:${m.text}`;
+    map.set(key, m);
+  }
+
+  for (const m of incoming) {
+    const key = m._id || `${m.senderId}:${m.createdAt}:${m.text}`;
+    map.set(key, m);
+  }
+
+  return Array.from(map.values()).sort(
+    (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
+  );
+};
 
 function Chat() {
   const { id: teamId } = useParams();
@@ -15,15 +30,15 @@ function Chat() {
 
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
-  const [teamName, setTeamName] = useState(initialTeamName || "");
+  const [teamName] = useState(initialTeamName || "");
   const [hasNewMessage, setHasNewMessage] = useState(false);
   const [initialLoaded, setInitialLoaded] = useState(false);
 
   const containerRef = useRef(null);
   const bottomRef = useRef(null);
   const seenTimeoutRef = useRef(null);
+  const prevTeamRef = useRef(null);
 
-  // SCROLL HELPERS
   const scrollToBottom = (smooth = true) => {
     bottomRef.current?.scrollIntoView({
       behavior: smooth ? "smooth" : "auto",
@@ -36,26 +51,22 @@ function Chat() {
     return el.scrollHeight - el.scrollTop - el.clientHeight < 100;
   };
 
-  //  MARK SEEN (debounced)
   const emitSeen = () => {
+    if (!teamId) return;
     clearTimeout(seenTimeoutRef.current);
 
     seenTimeoutRef.current = setTimeout(() => {
-      socket.emit("mark_seen", {
-        teamId,
-        token: localStorage.getItem("token"),
-      });
+      socket.emit("mark_seen", { teamId });
     }, 400);
   };
 
   const handleScroll = () => {
     if (isNearBottom()) {
       setHasNewMessage(false);
-      emitSeen(); //  mark seen when user reaches bottom
+      emitSeen();
     }
   };
 
-  // CURRENT USER
   const currentUserId = useMemo(() => {
     const token = localStorage.getItem("token");
     if (!token) return null;
@@ -67,7 +78,6 @@ function Chat() {
     }
   }, []);
 
-  // DATE LABEL
   const getDateLabel = (date) => {
     const msgDate = new Date(date);
     const today = new Date();
@@ -86,79 +96,101 @@ function Chat() {
     });
   };
 
-  //  FETCH + SOCKET
+  // Ensure socket connection (handshake auth token is set in connectSocket)
+  useEffect(() => {
+    connectSocket();
+  }, []);
+
+  // Rejoin on reconnect
+  useEffect(() => {
+    const onConnect = () => {
+      if (teamId) socket.emit("join_team", { teamId });
+    };
+
+    socket.on("connect", onConnect);
+    return () => {
+      socket.off("connect", onConnect);
+    };
+  }, [teamId]);
+
+  // Team room lifecycle + history + realtime
   useEffect(() => {
     if (!teamId) return;
 
-    const token = localStorage.getItem("token");
+    if (prevTeamRef.current && prevTeamRef.current !== teamId) {
+      socket.emit("leave_team", { teamId: prevTeamRef.current });
+    }
 
-    //  FIXED: send token also
-    socket.emit("join_team", {
-      teamId,
-      token,
-    });
+    socket.emit("join_team", { teamId });
+    prevTeamRef.current = teamId;
 
-    axios
-      .get(`${import.meta.env.VITE_API_URL}/api/messages/${teamId}`)
-      .then((res) => {
-        setMessages(res.data);
-
-        // scroll to latest on load
-        setTimeout(() => {
-          scrollToBottom(false);
-          setInitialLoaded(true);
-
-          // mark seen on open
-          socket.emit("mark_seen", { teamId, token });
-        }, 100);
-      })
-      .catch((err) => console.error(err));
-
-    socket.on("receive_message", (msg) => {
-      setMessages((prev) => [...prev, msg]);
+    const handleReceiveMessage = (msg) => {
+      setMessages((prev) => mergeMessagesById(prev, [msg]));
 
       if (!isNearBottom()) {
         setHasNewMessage(true);
       } else {
-        // if already at bottom → auto mark seen
         emitSeen();
       }
-    });
+    };
+
+    socket.on("receive_message", handleReceiveMessage);
+
+    let mounted = true;
+
+    (async () => {
+      try {
+        const res = await api.get(`/api/messages/${teamId}`);
+        if (!mounted) return;
+
+        setMessages((prev) => mergeMessagesById(prev, res.data || []));
+
+        setTimeout(() => {
+          if (!mounted) return;
+          scrollToBottom(false);
+          setInitialLoaded(true);
+          socket.emit("mark_seen", { teamId });
+        }, 100);
+      } catch (err) {
+        console.error(err);
+      }
+    })();
 
     return () => {
-      socket.off("receive_message");
+      mounted = false;
+      clearTimeout(seenTimeoutRef.current);
+      socket.emit("leave_team", { teamId });
+      socket.off("receive_message", handleReceiveMessage);
     };
   }, [teamId]);
 
-  // 🔄 AUTO SCROLL
+  // Auto-scroll on new messages if user already near bottom
   useEffect(() => {
     if (!initialLoaded) return;
-
     if (isNearBottom()) {
       scrollToBottom(true);
     }
-  }, [messages]);
+  }, [messages, initialLoaded]);
 
-  // SEND MESSAGE
   const sendMessage = () => {
-    if (!text.trim()) return;
+    const clean = text.trim();
+    if (!clean || !teamId) return;
 
-    const token = localStorage.getItem("token");
+    const clientMsgId = crypto.randomUUID();
 
-    socket.emit("send_message", {
-      teamId,
-      text,
-      token,
-    });
+    socket.timeout(5000).emit(
+      "send_message",
+      { teamId, text: clean, clientMsgId },
+      (err, ack) => {
+        if (err || !ack?.ok) {
+          console.error("send_message failed", err || ack);
+          return;
+        }
+      },
+    );
 
     setText("");
-
-    // immediately mark seen for own message
     emitSeen();
-
-    if (!isNearBottom()) {
-      setHasNewMessage(true);
-    }
   };
 
   const formatTime = (date) => {
@@ -173,21 +205,17 @@ function Chat() {
       <div className="p-6 max-w-2xl mx-auto bg-white rounded-xl shadow flex flex-col h-[80vh] relative">
         <h2 className="text-xl font-bold mb-3">{teamName || "Loading..."}</h2>
 
-        {/* MESSAGES */}
         <div
           ref={containerRef}
           onScroll={handleScroll}
           className="flex-1 overflow-y-auto space-y-2 p-3 bg-gray-50 rounded border"
         >
           {messages.length === 0 && (
-            <p className="text-gray-400 text-center mt-10">
-              No messages yet...
-            </p>
+            <p className="text-gray-400 text-center mt-10">No messages yet...</p>
           )}
 
           {messages.map((msg, index) => {
             const isMine = msg.senderId === currentUserId;
-
             const currentDate = new Date(msg.createdAt).toDateString();
             const prevDate =
               index > 0
@@ -198,21 +226,17 @@ function Chat() {
 
             return (
               <div key={msg._id || index}>
-                {/* DATE */}
                 {showDateSeparator && (
                   <div className="flex items-center my-4">
-                    <div className="flex-1 h-px bg-gray-300"></div>
+                    <div className="flex-1 h-px bg-gray-300" />
                     <span className="px-3 text-xs text-gray-500">
                       {getDateLabel(msg.createdAt)}
                     </span>
-                    <div className="flex-1 h-px bg-gray-300"></div>
+                    <div className="flex-1 h-px bg-gray-300" />
                   </div>
                 )}
 
-                {/* MESSAGE */}
-                <div
-                  className={`flex ${isMine ? "justify-end" : "justify-start"}`}
-                >
+                <div className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
                   <div className="max-w-[70%]">
                     {!isMine && (
                       <p className="text-xs text-gray-500 mb-1 ml-1">
@@ -229,7 +253,6 @@ function Chat() {
                     >
                       <div className="flex items-end gap-2">
                         <p className="text-sm break-words flex-1">{msg.text}</p>
-
                         <span className="text-[10px] opacity-60">
                           {formatTime(msg.createdAt)}
                         </span>
@@ -244,7 +267,6 @@ function Chat() {
           <div ref={bottomRef} />
         </div>
 
-        {/* NEW MESSAGE BUTTON */}
         {hasNewMessage && (
           <button
             onClick={() => {
@@ -258,7 +280,6 @@ function Chat() {
           </button>
         )}
 
-        {/* INPUT */}
         <div className="flex gap-2 mt-3">
           <input
             value={text}
@@ -266,7 +287,6 @@ function Chat() {
             placeholder="Type a message..."
             className="flex-1 border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-[#9AC0CD]"
           />
-
           <button
             onClick={sendMessage}
             className="bg-[#9AC0CD] text-white px-4 py-2 rounded hover:bg-[#7AA0A7]"

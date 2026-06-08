@@ -32,6 +32,7 @@ function Requests() {
           },
         );
         const sentData = await sentRes.json();
+        console.log(sentData);
         setSentRequests(sentData.requests || []);
 
         // RECEIVED
@@ -42,6 +43,7 @@ function Requests() {
           },
         );
         const recData = await recRes.json();
+        console.log(recData);
         setReceivedRequests(recData.requests || []);
       } catch (err) {
         console.log(err);
@@ -117,7 +119,12 @@ function Requests() {
       console.log(err);
     }
   };
-
+  const statusLabels = {
+    pending: "Pending",
+    accepted: "Accepted",
+    rejected: "Rejected",
+    withdrawn: "Withdrawn",
+  };
   return (
     <Layout>
       <div className="p-6 max-w-md mx-auto bg-white rounded-xl shadow">
@@ -153,18 +160,28 @@ function Requests() {
               <p className="text-gray-400 text-sm">No sent requests</p>
             )}
 
-            {sentRequests.map((req) => {
-              console.log(req); // safe now
+            {sentRequests.map((req, index) => {
+              const showHeader =
+                index === 0 || sentRequests[index - 1].status !== req.status;
 
               return (
-                <TeamRequestCard
-                  key={req._id}
-                  team={req.team}
-                  isPending={req.status === "pending"}
-                  onRequestJoin={(team) =>
-                    handleRequestAction(team, req._id, req.status)
-                  }
-                />
+                <div key={req._id}>
+                  {showHeader && (
+                    <div className="mt-5 mb-2">
+                      <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
+                        {statusLabels[req.status]}
+                      </h3>
+                    </div>
+                  )}
+
+                  <TeamRequestCard
+                    team={req.team}
+                    status={req.status}
+                    onRequestJoin={(team) =>
+                      handleRequestAction(team, req._id, req.status)
+                    }
+                  />
+                </div>
               );
             })}
           </>

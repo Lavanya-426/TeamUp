@@ -29,7 +29,7 @@ function ProjectDetails() {
   const sendRequest = async (teamId) => {
     const token = localStorage.getItem("token");
 
-    const res = await fetch("import.meta.env.VITE_API_URL/api/requests/send", {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/requests/send`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

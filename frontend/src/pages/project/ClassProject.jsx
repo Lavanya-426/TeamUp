@@ -22,7 +22,7 @@ function ClassProject() {
   const handleSubmit = async () => {
     const token = localStorage.getItem("token");
 
-    const res = await fetch("import.meta.env.VITE_API_URL/api/projects/add", {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/projects/add`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

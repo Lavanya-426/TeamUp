@@ -13,6 +13,22 @@ function AddProject() {
   const handleChange = (e) => {
     const { name, value } = e.target;
 
+    // Deadline validation
+    if (name === "deadline") {
+      const selectedDate = new Date(value);
+      const today = new Date();
+
+      today.setHours(0, 0, 0, 0);
+
+      if (selectedDate < today) {
+        setMessage("Deadline cannot be in the past");
+        setIsError(true);
+
+        setTimeout(() => setMessage(""), 3000);
+        return;
+      }
+    }
+
     // NESTED OBJECT SUPPORT
     if (name.includes(".")) {
       const [parent, child] = name.split(".");
@@ -34,6 +50,28 @@ function AddProject() {
 
   // SUBMIT
   const handleSubmit = async () => {
+    // Deadline validation
+    if (!form.deadline) {
+      setMessage("Please select a deadline");
+      setIsError(true);
+
+      setTimeout(() => setMessage(""), 3000);
+      return;
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const selectedDate = new Date(form.deadline);
+
+    if (selectedDate < today) {
+      setMessage("Deadline cannot be in the past");
+      setIsError(true);
+
+      setTimeout(() => setMessage(""), 3000);
+      return;
+    }
+
     // COMMON VALIDATION
     if (
       !type ||
@@ -192,8 +230,10 @@ function AddProject() {
             </div>
 
             <input
+              type="number"
               name="max_members"
               placeholder="Maximum members"
+              min="1"
               value={form.max_members || ""}
               onChange={handleChange}
               className="input"
@@ -223,6 +263,7 @@ function AddProject() {
               name="deadline"
               value={form.deadline || ""}
               onChange={handleChange}
+              min={new Date().toISOString().split("T")[0]}
               className="input"
             />
           </>
