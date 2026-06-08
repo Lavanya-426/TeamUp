@@ -1,4 +1,4 @@
-const OTP = require("../models/OTP");
+const OTP = require("../models/Otp.js");
 const User = require("../models/User");
 const bcrypt = require("bcrypt");
 const transporter = require("../config/mailer");
