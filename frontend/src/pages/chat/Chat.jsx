@@ -6,7 +6,7 @@ import io from "socket.io-client";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 
-const socket = io("import.meta.env.VITE_API_URL");
+const socket = io(import.meta.env.VITE_API_URL);
 
 function Chat() {
   const { id: teamId } = useParams();
