@@ -1,27 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useLocation, useParams } from "react-router-dom";
-import { jwtDecode } from "jwt-decode";
+import { useEffect, useState, useMemo, useRef } from "react";
+import { useParams, useLocation } from "react-router-dom";
 import Layout from "../../components/common/Layout";
-import socket, { connectSocket } from "../../services/socket";
+
+import axios from "axios";
+import { jwtDecode } from "jwt-decode";
+import socket from "../../services/socket";
 import api from "../../services/api";
 
-const mergeMessagesById = (existing, incoming) => {
-  const map = new Map();
-
-  for (const m of existing) {
-    const key = m._id || `${m.senderId}:${m.createdAt}:${m.text}`;
-    map.set(key, m);
-  }
-
-  for (const m of incoming) {
-    const key = m._id || `${m.senderId}:${m.createdAt}:${m.text}`;
-    map.set(key, m);
-  }
-
-  return Array.from(map.values()).sort(
-    (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
-  );
-};
 
 function Chat() {
   const { id: teamId } = useParams();
@@ -30,15 +15,15 @@ function Chat() {
 
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
-  const [teamName] = useState(initialTeamName || "");
+  const [teamName, setTeamName] = useState(initialTeamName || "");
   const [hasNewMessage, setHasNewMessage] = useState(false);
   const [initialLoaded, setInitialLoaded] = useState(false);
 
   const containerRef = useRef(null);
   const bottomRef = useRef(null);
   const seenTimeoutRef = useRef(null);
-  const prevTeamRef = useRef(null);
 
+  // SCROLL HELPERS
   const scrollToBottom = (smooth = true) => {
     bottomRef.current?.scrollIntoView({
       behavior: smooth ? "smooth" : "auto",
@@ -51,22 +36,43 @@ function Chat() {
     return el.scrollHeight - el.scrollTop - el.clientHeight < 100;
   };
 
+  //  MARK SEEN (debounced)
   const emitSeen = () => {
-    if (!teamId) return;
     clearTimeout(seenTimeoutRef.current);
 
     seenTimeoutRef.current = setTimeout(() => {
-      socket.emit("mark_seen", { teamId });
+      socket.emit("mark_seen", {
+        teamId,
+        token: localStorage.getItem("token"),
+      });
     }, 400);
   };
 
+  const mergeMessagesById = (existing, incoming) => {
+    const map = new Map();
+  
+    for (const m of existing) {
+      const key = m._id || `${m.senderId}:${m.createdAt}:${m.text}`;
+      map.set(key, m);
+    }
+  
+    for (const m of incoming) {
+      const key = m._id || `${m.senderId}:${m.createdAt}:${m.text}`;
+      map.set(key, m);
+    }
+  
+    return Array.from(map.values()).sort(
+      (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
+    );
+  };
   const handleScroll = () => {
     if (isNearBottom()) {
       setHasNewMessage(false);
-      emitSeen();
+      emitSeen(); //  mark seen when user reaches bottom
     }
   };
 
+  // CURRENT USER
   const currentUserId = useMemo(() => {
     const token = localStorage.getItem("token");
     if (!token) return null;
@@ -78,6 +84,7 @@ function Chat() {
     }
   }, []);
 
+  // DATE LABEL
   const getDateLabel = (date) => {
     const msgDate = new Date(date);
     const today = new Date();
@@ -96,99 +103,111 @@ function Chat() {
     });
   };
 
-  // Ensure socket connection (handshake auth token is set in connectSocket)
-  useEffect(() => {
-    connectSocket();
-  }, []);
-
-  // Rejoin on reconnect
-  useEffect(() => {
-    const onConnect = () => {
-      if (teamId) socket.emit("join_team", { teamId });
-    };
-
-    socket.on("connect", onConnect);
-    return () => {
-      socket.off("connect", onConnect);
-    };
-  }, [teamId]);
-
-  // Team room lifecycle + history + realtime
+  //  FETCH + SOCKET
   useEffect(() => {
     if (!teamId) return;
 
-    if (prevTeamRef.current && prevTeamRef.current !== teamId) {
-      socket.emit("leave_team", { teamId: prevTeamRef.current });
-    }
+    const token = localStorage.getItem("token");
 
-    socket.emit("join_team", { teamId });
-    prevTeamRef.current = teamId;
+    //  FIXED: send token also
+    socket.emit("join_team", {
+      teamId,
+      token,
+    });
 
-    const handleReceiveMessage = (msg) => {
-      setMessages((prev) => mergeMessagesById(prev, [msg]));
+    axios
+      .get(`${import.meta.env.VITE_API_URL}/api/messages/${teamId}`)
+      .then((res) => {
+        setMessages(res.data);
+
+        // scroll to latest on load
+        setTimeout(() => {
+          scrollToBottom(false);
+          setInitialLoaded(true);
+
+          // mark seen on open
+          socket.emit("mark_seen", { teamId, token });
+        }, 100);
+      })
+      .catch((err) => console.error(err));
+
+    // history load
+const res = await api.get(`/api/messages/${teamId}`);
+setMessages((prev) => mergeMessagesById(prev, res.data));
+
+// realtime
+socket.on("receive_message", (msg) => {
+  setMessages((prev) => mergeMessagesById(prev, [msg]));
+});
 
       if (!isNearBottom()) {
         setHasNewMessage(true);
       } else {
+        // if already at bottom → auto mark seen
         emitSeen();
       }
-    };
+    });
+    const prevTeamRef = useRef(null);
 
-    socket.on("receive_message", handleReceiveMessage);
+useEffect(() => {
+  if (!teamId) return;
 
-    let mounted = true;
+  if (prevTeamRef.current && prevTeamRef.current !== teamId) {
+    socket.emit("leave_team", { teamId: prevTeamRef.current });
+  }
 
-    (async () => {
-      try {
-        const res = await api.get(`/api/messages/${teamId}`);
-        if (!mounted) return;
+  socket.emit("join_team", { teamId }); // token removed once handshake auth is added
+  prevTeamRef.current = teamId;
 
-        setMessages((prev) => mergeMessagesById(prev, res.data || []));
+  return () => {
+    socket.emit("leave_team", { teamId });
+  };
+}, [teamId]);
+useEffect(() => {
+  const onConnect = () => {
+    if (teamId) socket.emit("join_team", { teamId });
+  };
 
-        setTimeout(() => {
-          if (!mounted) return;
-          scrollToBottom(false);
-          setInitialLoaded(true);
-          socket.emit("mark_seen", { teamId });
-        }, 100);
-      } catch (err) {
-        console.error(err);
-      }
-    })();
+  socket.on("connect", onConnect);
+  return () => socket.off("connect", onConnect);
+}, [teamId]);
 
+    
     return () => {
-      mounted = false;
-      clearTimeout(seenTimeoutRef.current);
-      socket.emit("leave_team", { teamId });
-      socket.off("receive_message", handleReceiveMessage);
+      socket.off("receive_message");
     };
   }, [teamId]);
 
-  // Auto-scroll on new messages if user already near bottom
+  // 🔄 AUTO SCROLL
   useEffect(() => {
     if (!initialLoaded) return;
+
     if (isNearBottom()) {
       scrollToBottom(true);
     }
-  }, [messages, initialLoaded]);
+  }, [messages]);
 
+  // SEND MESSAGE
   const sendMessage = () => {
     const clean = text.trim();
     if (!clean || !teamId) return;
-
+  
     const clientMsgId = crypto.randomUUID();
-
+  
     socket.timeout(5000).emit(
       "send_message",
       { teamId, text: clean, clientMsgId },
       (err, ack) => {
         if (err || !ack?.ok) {
           console.error("send_message failed", err || ack);
+          // optional: show toast/retry UI
           return;
         }
+        // success acknowledged by server
+        // no manual append here; receive_message event will update UI
       },
     );
-
+  
     setText("");
     emitSeen();
   };
@@ -205,17 +224,21 @@ function Chat() {
       <div className="p-6 max-w-2xl mx-auto bg-white rounded-xl shadow flex flex-col h-[80vh] relative">
         <h2 className="text-xl font-bold mb-3">{teamName || "Loading..."}</h2>
 
+        {/* MESSAGES */}
         <div
           ref={containerRef}
           onScroll={handleScroll}
           className="flex-1 overflow-y-auto space-y-2 p-3 bg-gray-50 rounded border"
         >
           {messages.length === 0 && (
-            <p className="text-gray-400 text-center mt-10">No messages yet...</p>
+            <p className="text-gray-400 text-center mt-10">
+              No messages yet...
+            </p>
           )}
 
           {messages.map((msg, index) => {
             const isMine = msg.senderId === currentUserId;
+
             const currentDate = new Date(msg.createdAt).toDateString();
             const prevDate =
               index > 0
@@ -226,17 +249,21 @@ function Chat() {
 
             return (
               <div key={msg._id || index}>
+                {/* DATE */}
                 {showDateSeparator && (
                   <div className="flex items-center my-4">
-                    <div className="flex-1 h-px bg-gray-300" />
+                    <div className="flex-1 h-px bg-gray-300"></div>
                     <span className="px-3 text-xs text-gray-500">
                       {getDateLabel(msg.createdAt)}
                     </span>
-                    <div className="flex-1 h-px bg-gray-300" />
+                    <div className="flex-1 h-px bg-gray-300"></div>
                   </div>
                 )}
 
-                <div className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
+                {/* MESSAGE */}
+                <div
+                  className={`flex ${isMine ? "justify-end" : "justify-start"}`}
+                >
                   <div className="max-w-[70%]">
                     {!isMine && (
                       <p className="text-xs text-gray-500 mb-1 ml-1">
@@ -253,6 +280,7 @@ function Chat() {
                     >
                       <div className="flex items-end gap-2">
                         <p className="text-sm break-words flex-1">{msg.text}</p>
+
                         <span className="text-[10px] opacity-60">
                           {formatTime(msg.createdAt)}
                         </span>
@@ -267,6 +295,7 @@ function Chat() {
           <div ref={bottomRef} />
         </div>
 
+        {/* NEW MESSAGE BUTTON */}
         {hasNewMessage && (
           <button
             onClick={() => {
@@ -280,6 +309,7 @@ function Chat() {
           </button>
         )}
 
+        {/* INPUT */}
         <div className="flex gap-2 mt-3">
           <input
             value={text}
@@ -287,6 +317,7 @@ function Chat() {
             placeholder="Type a message..."
             className="flex-1 border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-[#9AC0CD]"
           />
+
           <button
             onClick={sendMessage}
             className="bg-[#9AC0CD] text-white px-4 py-2 rounded hover:bg-[#7AA0A7]"
