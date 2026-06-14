@@ -64,7 +64,7 @@ function ProjectDetails() {
             const token = localStorage.getItem("token");
 
             const res = await fetch(
-              "import.meta.env.VITE_API_URL/api/teams/create",
+              `${import.meta.env.VITE_API_URL}/api/teams/create`,
               {
                 method: "POST",
                 headers: {
